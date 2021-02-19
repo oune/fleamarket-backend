@@ -68,4 +68,17 @@ appBook.get("/test", async (req, res) => {
   res.status(200).send(JSON.stringify(datas));
 });
 
+appBook.get("/test2", async (req, res) => {
+  const snapshot = await db.collection("users").doc("lee").listCollections();
+
+  let datas = [];
+  snapshot.forEach((doc) => {
+    let id = doc.id;
+
+    datas.push({ id });
+  });
+
+  res.status(200).send(JSON.stringify(datas));
+});
+
 exports.books = functions.https.onRequest(appBook);
