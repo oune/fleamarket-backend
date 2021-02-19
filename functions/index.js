@@ -4,11 +4,12 @@ const cors = require('cors');
 
 const admin = require('firebase-admin');
 admin.initializeApp();
+const db = admin.firestore();
 
 const app = express();
 
 app.get("/", async (req, res) => {
-    const snapshot = await admin.firestore().collection("users").get();
+    const snapshot = await db.collection("users").get();
   
     let users = [];
     snapshot.forEach((doc) => {
@@ -24,9 +25,33 @@ app.get("/", async (req, res) => {
 app.post('/', async (req, res) => {
     const user = req.body;
 
-    await admin.firestore().collection('users').add(user);
+    await db.collection('users').add(user);
 
     res.status(201).send();
 })
 
-// exports.user = functions.https.onRequest(app);
+exports.user = functions.https.onRequest(app);
+
+const appBook = express();
+
+appBook.get("/", async (req, res) => {
+  const snapshot = await db.collection("books").get();
+
+  let books = [];
+  snapshot.forEach((doc) => {
+    let id = doc.id;
+    let data = doc.data();
+
+    let sells = [];
+    const collections = doc.collection("reservations").get();
+    collections.forEach(collection => {
+      console.log('Found subcollection with id:', collection.id);
+    });
+
+    books.push({ id, sells, ...data });
+  });
+
+  res.status(200).send(JSON.stringify(books));
+});
+
+exports.books = functions.https.onRequest(appBook);
