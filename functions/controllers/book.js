@@ -9,6 +9,8 @@ admin.initializeApp();
 const db = admin.firestore();
 const bookApp = express();
 
+bookApp.use(cors({ origin: true }));
+
 bookApp.get("/", async (req, res) => {
   const snapshot = await db.collection("books").get();
 
