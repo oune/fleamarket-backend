@@ -46,9 +46,9 @@ bookApp.delete("/:title", async (req, res) => {
   res.status(200).send();
 })
 
-bookApp.post("/:title/reservations", async (req, res) => {
+bookApp.post("/:title/reservations", async (req, res) => { //TODO 판매중인 개수와 비교해서 예약할수 있는지 확인이 필요
   const reservation = req.body;
-  reservation.bookName = req.params.title;
+  reservation.title = req.params.title;
   reservation.time = admin.firestore.Timestamp.now();
 
   await db.collection("reservations").add(reservation);
@@ -57,7 +57,7 @@ bookApp.post("/:title/reservations", async (req, res) => {
 })
 
 bookApp.get("/:title/reservations", async (req, res) => {
-  const snapshot = await db.collection("reservations").where("bookName", "==", req.params.title).get();
+  const snapshot = await db.collection("reservations").where("title", "==", req.params.title).get();
 
   let reservations = [];
   snapshot.forEach((doc) => {
@@ -68,6 +68,18 @@ bookApp.get("/:title/reservations", async (req, res) => {
   });
 
   res.status(200).send(JSON.stringify(reservations));
+})
+
+bookApp.post("/:title/stocks", async (req, res) => {
+  const stock = req.body;
+  stock.title = req.params.title;
+
+  await db.collection("stocks").add(stock);
+  await db.collection("books").doc(req.params.title).update({
+    stockCount: admin.firestore.FieldValue.increment(1)
+  });
+
+  res.status(201).send();
 })
 
 exports.books = functions.https.onRequest(bookApp);
