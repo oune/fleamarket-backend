@@ -52,6 +52,9 @@ bookApp.post("/:title/reservations", async (req, res) => { //TODO 판매중인 �
   reservation.time = admin.firestore.Timestamp.now();
 
   await db.collection("reservations").add(reservation);
+  await db.collection("books").doc(req.params.title).update({
+    reservationCount: admin.firestore.FieldValue.increment(1)
+  });
 
   res.status(201).send();
 });
@@ -68,10 +71,6 @@ bookApp.get("/:title/reservations", async (req, res) => {
   });
 
   res.status(200).send(JSON.stringify(reservations));
-});
-
-bookApp.put("/:title/reservations", async (req, res) => {
-
 });
 
 bookApp.get("/:title/stocks", async (req, res) => {
