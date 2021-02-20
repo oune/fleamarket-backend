@@ -1,12 +1,11 @@
 const functions = require("firebase-functions");
+const admin = require('firebase-admin');
+const db = admin.firestore();
 const express = require("express");
 const cors = require('cors');
 
-const admin = require('firebase-admin');
-
 admin.initializeApp();
 
-const db = admin.firestore();
 const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
@@ -23,6 +22,14 @@ bookApp.get("/", async (req, res) => {
   });
 
   res.status(200).send(JSON.stringify(books));
+});
+
+bookApp.post("/", async (req, res) => {
+  const user = req.body;
+
+  await admin.firestore().collection("books").add(user);
+
+  res.status(201).send();
 });
 
 exports.books = functions.https.onRequest(bookApp);
