@@ -46,4 +46,28 @@ bookApp.delete("/:title", async (req, res) => {
   res.status(200).send();
 })
 
+bookApp.post("/:title/reservations", async (req, res) => {
+  const reservation = req.body;
+  reservation.bookName = req.params.title;
+  reservation.time = admin.firestore.Timestamp.now();
+
+  await db.collection("reservations").add(reservation);
+
+  res.status(201).send();
+})
+
+bookApp.get("/:title/reservations", async (req, res) => {
+  const snapshot = await db.collection("reservations").where("bookName", "==", req.params.title).get();
+
+  let reservations = [];
+  snapshot.forEach((doc) => {
+    let id = doc.id;
+    let data = doc.data();
+
+    reservations.push({ id, ...data });
+  });
+
+  res.status(200).send(JSON.stringify(reservations));
+})
+
 exports.books = functions.https.onRequest(bookApp);
