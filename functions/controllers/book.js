@@ -40,4 +40,10 @@ bookApp.put("/:title", async (req, res) => {
   res.status(200).send();
 });
 
+bookApp.delete("/:id", async (req, res) => {
+  await db.collection("books").doc(req.params.id).delete();
+
+  res.status(200).send();
+})
+
 exports.books = functions.https.onRequest(bookApp);
