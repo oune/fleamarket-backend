@@ -19,12 +19,6 @@ bookApp.get("/", async (req, res) => {
     let id = doc.id;
     let data = doc.data();
 
-    let sells = [];
-    const collections = doc.collection("reservations").get();
-    collections.forEach(collection => {
-      console.log('Found subcollection with id:', collection.id);
-    });
-
     books.push({ id, sells, ...data });
   });
 
