@@ -44,7 +44,7 @@ bookApp.delete("/:title", async (req, res) => {
   await db.collection("books").doc(req.params.title).delete();
 
   res.status(200).send();
-})
+});
 
 bookApp.post("/:title/reservations", async (req, res) => { //TODO 판매중인 개수와 비교해서 예약할수 있는지 확인이 필요
   const reservation = req.body;
@@ -54,7 +54,7 @@ bookApp.post("/:title/reservations", async (req, res) => { //TODO 판매중인 �
   await db.collection("reservations").add(reservation);
 
   res.status(201).send();
-})
+});
 
 bookApp.get("/:title/reservations", async (req, res) => {
   const snapshot = await db.collection("reservations").where("title", "==", req.params.title).get();
@@ -68,7 +68,25 @@ bookApp.get("/:title/reservations", async (req, res) => {
   });
 
   res.status(200).send(JSON.stringify(reservations));
-})
+});
+
+bookApp.put("/:title/reservations", async (req, res) => {
+
+});
+
+bookApp.get("/:title/stocks", async (req, res) => {
+  const snapshot = await db.collection("stocks").where("title", "==", req.params.title).get();
+
+  let stocks = [];
+  snapshot.forEach((doc) => {
+    let id = doc.id;
+    let data = doc.data();
+
+    stocks.push({ id, ...data });
+  });
+
+  res.status(200).send(JSON.stringify(stocks));
+});
 
 bookApp.post("/:title/stocks", async (req, res) => {
   const stock = req.body;
@@ -80,6 +98,6 @@ bookApp.post("/:title/stocks", async (req, res) => {
   });
 
   res.status(201).send();
-})
+});
 
 exports.books = functions.https.onRequest(bookApp);
