@@ -19,37 +19,10 @@ bookApp.get("/", async (req, res) => {
     let id = doc.id;
     let data = doc.data();
 
-    books.push({ id, sells, ...data });
+    books.push({ id, ...data });
   });
 
   res.status(200).send(JSON.stringify(books));
-});
-
-bookApp.get("/test", async (req, res) => {
-  const snapshot = await db.collection("users").doc("lee").collection("dsa").get();
-
-  let datas = [];
-  snapshot.forEach((doc) => {
-    let id = doc.id;
-    let data = doc.data();
-
-    datas.push({ id, ...data });
-  });
-
-  res.status(200).send(JSON.stringify(datas));
-});
-
-bookApp.get("/test2", async (req, res) => {
-  const snapshot = await db.collection("users").doc("lee").listCollections();
-
-  let datas = [];
-  snapshot.forEach((doc) => {
-    let id = doc.id;
-
-    datas.push({ id });
-  });
-
-  res.status(200).send(JSON.stringify(datas));
 });
 
 exports.books = functions.https.onRequest(bookApp);
