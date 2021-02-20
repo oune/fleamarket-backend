@@ -40,8 +40,8 @@ bookApp.put("/:title", async (req, res) => {
   res.status(200).send();
 });
 
-bookApp.delete("/:id", async (req, res) => {
-  await db.collection("books").doc(req.params.id).delete();
+bookApp.delete("/:title", async (req, res) => {
+  await db.collection("books").doc(req.params.title).delete();
 
   res.status(200).send();
 })
