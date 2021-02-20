@@ -38,6 +38,6 @@ bookApp.put("/:title", async (req, res) => {
   await db.collection("books").doc(req.params.title).update(body);
 
   res.status(200).send();
-})
+});
 
 exports.books = functions.https.onRequest(bookApp);
