@@ -27,9 +27,17 @@ bookApp.get("/", async (req, res) => {
 bookApp.post("/", async (req, res) => {
   const user = req.body;
 
-  await admin.firestore().collection("books").add(user);
+  await db.collection("books").doc(user["title"]).set(user);
 
   res.status(201).send();
 });
+
+bookApp.put("/:title", async (req, res) => {
+  const body = req.body;
+
+  await db.collection("books").doc(req.params.title).update(body);
+
+  res.status(200).send();
+})
 
 exports.books = functions.https.onRequest(bookApp);
