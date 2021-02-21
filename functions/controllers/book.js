@@ -51,7 +51,7 @@ bookApp.delete("/:title", async (req, res) => {
 bookApp.post("/:title/reservations", async (req, res) => { //TODO 판매중인 개수와 비교해서 예약할수 있는지 확인이 필요
   const reservation = req.body;
   reservation.title = req.params.title;
-  reservation.time = admin.firestore.Timestamp.now();
+  reservation.isCancle = false;
 
   await db.collection("reservations").add(reservation);
   await db.collection("books").doc(req.params.title).update({
@@ -62,7 +62,7 @@ bookApp.post("/:title/reservations", async (req, res) => { //TODO 판매중인 �
 });
 
 bookApp.get("/:title/reservations", async (req, res) => {
-  const snapshot = await db.collection("reservations").where("title", "==", req.params.title).get();
+  const snapshot = await db.collection("reservations").where("title", "==", req.params.title).where("isCancle", "==", false).get();
 
   let reservations = [];
   snapshot.forEach((doc) => {
