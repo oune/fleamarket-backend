@@ -75,14 +75,15 @@ bookApp.put("/reservations/:id", async (req, res) => {
 });
 
 bookApp.delete("/:title/reservations/:id", async (req, res) => {
-  const data = {
-    "isCancle":true
-  }
+  const batch = db.batch();
 
-  await db.collection("reservations").doc(req.params.id).update(data);
-  await db.collection("books").doc(req.params.title).update({
-    reservationCount: admin.firestore.FieldValue.increment(-1)
-  });
+  const reservationRef = db.collection("reservations").doc(req.params.id);
+  batch.update(reservationRef, {"isCancle": true});
+
+  const bookRef = db.collection("books").doc(req.params.title);
+  batch.update(bookRef, {reservationCount: admin.firestore.FieldValue.increment(-1)});
+
+  await batch.commit();
 
   res.status(200).send();
 });
