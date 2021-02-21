@@ -99,16 +99,16 @@ bookApp.post("/:title/stocks", async (req, res) => {
   res.status(201).send();
 });
 
-bookApp.put("/:title/stocks", async (req, res) => {
+bookApp.put("/stocks/:id", async (req, res) => {
   const body = req.body;
 
-  await db.collection("stocks").doc(req.params.title).update(body);
+  await db.collection("stocks").doc(req.params.id).update(body);
 
   res.status(200).send();
 });
 
-bookApp.delete("/:title/stocks", async (req, res) => {
-  await db.collection("stocks").doc(req.params.title).delete();
+bookApp.delete("/stocks/:id", async (req, res) => {
+  await db.collection("stocks").doc(req.params.id).delete();
 
   res.status(200).send();
 });
