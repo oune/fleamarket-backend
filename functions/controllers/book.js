@@ -5,7 +5,6 @@ const cors = require('cors');
 
 admin.initializeApp();
 const db = admin.firestore();
-
 const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
@@ -54,6 +53,20 @@ bookApp.post("/:title/reservations", async (req, res) => {
 
 bookApp.get("/:title/reservations", async (req, res) => {
   const snapshot = await db.collection("reservations").where("title", "==", req.params.title).where("isCancle", "==", false).get();
+
+  let reservations = [];
+  snapshot.forEach((doc) => {
+    let id = doc.id;
+    let data = doc.data();
+
+    reservations.push({ id, ...data });
+  });
+
+  res.status(200).send(JSON.stringify(reservations));
+});
+
+bookApp.get("/:studentId/:name/reservations", async (req, res) => {
+  const snapshot = await db.collection("reservations").where("studentId", "==", req.params.studentId).where("name", "==", req.params.name).where("isCancle", "==", false).get();
 
   let reservations = [];
   snapshot.forEach((doc) => {
