@@ -26,24 +26,24 @@ bookApp.get("/", async (req, res) => {
 
 bookApp.post("/:title/reservations", async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.title);
-  
+
   try {
     await db.runTransaction(async t => {
-    const doc = await t.get(bookRef);
-    const resCount = doc.data().stockCount - doc.data().reservationCount;
-    
-    if (resCount > 0) {
-      const reservation = req.body;
-      reservation.title = req.params.title;
-      reservation.isCancle = false;
+      const doc = await t.get(bookRef);
+      const resCount = doc.data().stockCount - doc.data().reservationCount;
 
-      await db.collection("reservations").add(reservation);
-      await db.collection("books").doc(req.params.title).update({
-        reservationCount: admin.firestore.FieldValue.increment(1)
-      });
-    } else {
-      throw new Error("no stock");
-    }
+      if (resCount > 0) {
+        const reservation = req.body;
+        reservation.title = req.params.title;
+        reservation.isCancle = false;
+
+        await db.collection("reservations").add(reservation);
+        await db.collection("books").doc(req.params.title).update({
+          reservationCount: admin.firestore.FieldValue.increment(1)
+        });
+      } else {
+        throw new Error("no stock");
+      }
 
     });
   } catch (e) {
@@ -78,10 +78,10 @@ bookApp.delete("/:title/reservations/:id", async (req, res) => {
   const batch = db.batch();
 
   const reservationRef = db.collection("reservations").doc(req.params.id);
-  batch.update(reservationRef, {"isCancle": true});
+  batch.update(reservationRef, { "isCancle": true });
 
   const bookRef = db.collection("books").doc(req.params.title);
-  batch.update(bookRef, {reservationCount: admin.firestore.FieldValue.increment(-1)});
+  batch.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
 
   await batch.commit();
 
