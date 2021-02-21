@@ -24,16 +24,31 @@ bookApp.get("/", async (req, res) => {
   res.status(200).send(JSON.stringify(books));
 });
 
-bookApp.post("/:title/reservations", async (req, res) => { //TODO 판매중인 개수와 비교해서 예약할수 있는지 확인이 필요
-  const reservation = req.body;
-  reservation.title = req.params.title;
-  reservation.isCancle = false;
+bookApp.post("/:title/reservations", async (req, res) => {
+  const bookRef = db.collection("books").doc(req.params.title);
+  
+  try {
+    await db.runTransaction(async t => {
+    const doc = await t.get(bookRef);
+    const resCount = doc.data().stockCount - doc.data().reservationCount;
+    
+    if (resCount > 0) {
+      const reservation = req.body;
+      reservation.title = req.params.title;
+      reservation.isCancle = false;
 
-  await db.collection("reservations").add(reservation);
-  await db.collection("books").doc(req.params.title).update({
-    reservationCount: admin.firestore.FieldValue.increment(1)
-  });
+      await db.collection("reservations").add(reservation);
+      await db.collection("books").doc(req.params.title).update({
+        reservationCount: admin.firestore.FieldValue.increment(1)
+      });
+    } else {
+      throw new Error("no stock");
+    }
 
+    });
+  } catch (e) {
+    res.send(421).send();
+  }
   res.status(201).send();
 });
 
