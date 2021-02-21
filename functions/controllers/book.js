@@ -23,8 +23,8 @@ bookApp.get("/", async (req, res) => {
   res.status(200).send(JSON.stringify(books));
 });
 
-bookApp.post("/:title/reservations", async (req, res) => {
-  const bookRef = db.collection("books").doc(req.params.title);
+bookApp.post("/:bookId/reservations", async (req, res) => {
+  const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
 
   try {
@@ -34,7 +34,7 @@ bookApp.post("/:title/reservations", async (req, res) => {
 
       if (resCount > 0) {
         const reservation = req.body;
-        reservation.title = req.params.title;
+        reservation.bookId = req.params.bookId;
         reservation.isCancle = false;
 
         await t.set(reservationRef, reservation);
@@ -87,9 +87,9 @@ bookApp.put("/reservations/:id", async (req, res) => {
   res.status(200).send();
 });
 
-bookApp.delete("/:title/reservations/:id/:password", async (req, res) => {
+bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
-  const bookRef = db.collection("books").doc(req.params.title);
+  const bookRef = db.collection("books").doc(req.params.bookId);
 
   try {
     await db.runTransaction(async t => {
@@ -103,15 +103,14 @@ bookApp.delete("/:title/reservations/:id/:password", async (req, res) => {
       }
     });
   } catch (e) {
-    console.log('Transaction failure:', e);
     res.status(421).send("트랜잭션 실패");
   }
 
   res.status(200).send();
 });
 
-bookApp.get("/:title/stocks", async (req, res) => {
-  const snapshot = await db.collection("stocks").where("title", "==", req.params.title).get();
+bookApp.get("/:id/stocks", async (req, res) => {
+  const snapshot = await db.collection("stocks").where("bookId", "==", req.params.id).get();
 
   let stocks = [];
   snapshot.forEach((doc) => {
