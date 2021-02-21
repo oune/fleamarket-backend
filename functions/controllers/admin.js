@@ -45,7 +45,7 @@ adminApp.post("/books/:title/stocks", async (req, res) => {
     const bookRef = db.collection("books").doc(req.params.title);
     batch.update(bookRef, { stockCount: admin.firestore.FieldValue.increment(1) });
 
-    batch.commit();
+    await batch.commit();
 
     res.status(201).send();
 });
@@ -59,10 +59,15 @@ adminApp.put("/stocks/:id", async (req, res) => {
 });
 
 adminApp.delete("/:title/stocks/:id", async (req, res) => {
-    await db.collection("stocks").doc(req.params.id).delete();
-    await db.collection("books").doc(req.params.title).update({
-        stockCount: admin.firestore.FieldValue.increment(-1)
-    });
+    const batch = db.batch();
+
+    const stockRef = db.collection("stocks").doc(req.params.id);
+    batch.delete(stockRef);
+
+    const bookRef = db.collection("books").doc(req.params.title);
+    batch.update(bookRef, {stockCount: admin.firestore.FieldValue.increment(-1)});
+
+    await batch.commit();
 
     res.status(200).send();
 });
