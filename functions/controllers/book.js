@@ -99,4 +99,12 @@ bookApp.post("/:title/stocks", async (req, res) => {
   res.status(201).send();
 });
 
+bookApp.put("/:title/stocks", async (req, res) => {
+  const body = req.body;
+
+  await db.collection("stocks").doc(req.params.title).update(body);
+
+  res.status(200).send();
+});
+
 exports.books = functions.https.onRequest(bookApp);
