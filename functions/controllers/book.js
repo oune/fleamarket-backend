@@ -125,6 +125,9 @@ bookApp.put("/stocks/:id", async (req, res) => {
 
 bookApp.delete("/stocks/:id", async (req, res) => {
   await db.collection("stocks").doc(req.params.id).delete();
+  await db.collection("books").doc(req.params.title).update({
+    stockCount: admin.firestore.FieldValue.increment(-1)
+  });
 
   res.status(200).send();
 });
