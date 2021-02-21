@@ -3,7 +3,6 @@ const admin = require('firebase-admin');
 const express = require("express");
 const cors = require('cors');
 
-admin.initializeApp();
 const db = admin.firestore();
 
 const adminApp = express();
