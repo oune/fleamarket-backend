@@ -73,6 +73,20 @@ bookApp.get("/:title/reservations", async (req, res) => {
   res.status(200).send(JSON.stringify(reservations));
 });
 
+bookApp.put("/reservations/:id", async (req, res) => {
+  const body = req.body;
+
+  await db.collection("reservations").doc(req.params.id).update(body);
+
+  res.status(200).send();
+});
+
+bookApp.delete("/reservations/:id", async (req, res) => {
+  await db.collection("reservations").doc(req.params.id).delete();
+
+  res.status(200).send();
+});
+
 bookApp.get("/:title/stocks", async (req, res) => {
   const snapshot = await db.collection("stocks").where("title", "==", req.params.title).get();
 
