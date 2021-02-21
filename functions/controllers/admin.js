@@ -9,7 +9,7 @@ const adminApp = express();
 
 adminApp.use(cors({ origin: true }));
 
-adminApp.post("/", async (req, res) => {
+adminApp.post("/books", async (req, res) => {
   const user = req.body;
   user.stockCount = 0;
   user.reservationCount = 0;
@@ -19,7 +19,7 @@ adminApp.post("/", async (req, res) => {
   res.status(201).send();
 });
 
-adminApp.put("/:title", async (req, res) => {
+adminApp.put("/books/:title", async (req, res) => {
   const body = req.body;
 
   await db.collection("books").doc(req.params.title).update(body);
@@ -27,13 +27,13 @@ adminApp.put("/:title", async (req, res) => {
   res.status(200).send();
 });
 
-adminApp.delete("/:title", async (req, res) => {
+adminApp.delete("/books/:title", async (req, res) => {
   await db.collection("books").doc(req.params.title).delete();
 
   res.status(200).send();
 });
 
-adminApp.post("/:title/stocks", async (req, res) => {
+adminApp.post("/books/:title/stocks", async (req, res) => {
   const stock = req.body;
   stock.title = req.params.title;
 
@@ -45,7 +45,7 @@ adminApp.post("/:title/stocks", async (req, res) => {
   res.status(201).send();
 });
 
-adminApp.put("/stocks/:id", async (req, res) => {
+adminApp.put("/books/stocks/:id", async (req, res) => {
   const body = req.body;
 
   await db.collection("stocks").doc(req.params.id).update(body);
@@ -53,7 +53,7 @@ adminApp.put("/stocks/:id", async (req, res) => {
   res.status(200).send();
 });
 
-adminApp.delete("/:title/stocks/:id", async (req, res) => {
+adminApp.delete("/books/:title/stocks/:id", async (req, res) => {
   await db.collection("stocks").doc(req.params.id).delete();
   await db.collection("books").doc(req.params.title).update({
     stockCount: admin.firestore.FieldValue.increment(-1)
