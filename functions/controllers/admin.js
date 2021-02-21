@@ -45,7 +45,7 @@ adminApp.post("/books/:title/stocks", async (req, res) => {
   res.status(201).send();
 });
 
-adminApp.put("/books/stocks/:id", async (req, res) => {
+adminApp.put("/stocks/:id", async (req, res) => {
   const body = req.body;
 
   await db.collection("stocks").doc(req.params.id).update(body);
@@ -53,7 +53,7 @@ adminApp.put("/books/stocks/:id", async (req, res) => {
   res.status(200).send();
 });
 
-adminApp.delete("/books/:title/stocks/:id", async (req, res) => {
+adminApp.delete("/:title/stocks/:id", async (req, res) => {
   await db.collection("stocks").doc(req.params.id).delete();
   await db.collection("books").doc(req.params.title).update({
     stockCount: admin.firestore.FieldValue.increment(-1)
