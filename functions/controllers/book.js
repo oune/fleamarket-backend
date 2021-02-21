@@ -39,14 +39,14 @@ bookApp.post("/:title/reservations", async (req, res) => {
 
         await t.set(reservationRef, reservation);
         await t.update(bookRef, {reservationCount: admin.firestore.FieldValue.increment(1)});
-        
+
       } else {
         throw new Error("no stock");
       }
 
     });
   } catch (e) {
-    res.status(421).send("남은 재고가 없음");
+    res.status(421).send("트랜잭션 실패");
   }
   res.status(201).send();
 });
@@ -87,16 +87,25 @@ bookApp.put("/reservations/:id", async (req, res) => {
   res.status(200).send();
 });
 
-bookApp.delete("/:title/reservations/:id", async (req, res) => {
-  const batch = db.batch();
-
+bookApp.delete("/:title/reservations/:id/:password", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
-  batch.update(reservationRef, { "isCancle": true });
-
   const bookRef = db.collection("books").doc(req.params.title);
-  batch.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
 
-  await batch.commit();
+  try {
+    await db.runTransaction(async t => {
+      const doc = await t.get(reservationRef);
+
+      if (doc.data().password === req.params.password) {
+        await t.update(reservationRef, { "isCancle": true });
+        await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
+      } else {
+        throw new Error("비밀번호가 다름");
+      }
+    });
+  } catch (e) {
+    console.log('Transaction failure:', e);
+    res.status(421).send("트랜잭션 실패");
+  }
 
   res.status(200).send();
 });
