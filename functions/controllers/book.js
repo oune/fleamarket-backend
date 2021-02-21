@@ -83,8 +83,15 @@ bookApp.put("/reservations/:id", async (req, res) => {
   res.status(200).send();
 });
 
-bookApp.delete("/reservations/:id", async (req, res) => {
-  await db.collection("reservations").doc(req.params.id).delete();
+bookApp.delete("/:title/reservations/:id", async (req, res) => {
+  const data = {
+    "isCancle":true
+  }
+
+  await db.collection("reservations").doc(req.params.id).update(data);
+  await db.collection("books").doc(req.params.title).update({
+    reservationCount: admin.firestore.FieldValue.increment(-1)
+  });
 
   res.status(200).send();
 });
