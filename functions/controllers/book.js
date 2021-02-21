@@ -107,4 +107,10 @@ bookApp.put("/:title/stocks", async (req, res) => {
   res.status(200).send();
 });
 
+bookApp.delete("/:title/stocks", async (req, res) => {
+  await db.collection("stocks").doc(req.params.title).delete();
+
+  res.status(200).send();
+});
+
 exports.books = functions.https.onRequest(bookApp);
