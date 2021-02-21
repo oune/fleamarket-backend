@@ -13,35 +13,35 @@ adminApp.post("/books", async (req, res) => {
     user.stockCount = 0;
     user.reservationCount = 0;
 
-    await db.collection("books").doc(user["title"]).set(user);
+    await db.collection("books").add(user);
 
     res.status(201).send();
 });
 
-adminApp.put("/books/:title", async (req, res) => {
+adminApp.put("/books/:id", async (req, res) => {
     const body = req.body;
 
-    await db.collection("books").doc(req.params.title).update(body);
+    await db.collection("books").doc(req.params.id).update(body);
 
     res.status(200).send();
 });
 
-adminApp.delete("/books/:title", async (req, res) => {
-    await db.collection("books").doc(req.params.title).delete();
+adminApp.delete("/books/:id", async (req, res) => {
+    await db.collection("books").doc(req.params.id).delete();
 
     res.status(200).send();
 });
 
-adminApp.post("/books/:title/stocks", async (req, res) => {
+adminApp.post("/books/:id/stocks", async (req, res) => {
     const stock = req.body;
-    stock.title = req.params.title;
+    stock.bookId = req.params.id;
 
     const batch = db.batch();
 
     const stockRef = db.collection("stocks").doc();
     batch.set(stockRef, stock);
 
-    const bookRef = db.collection("books").doc(req.params.title);
+    const bookRef = db.collection("books").doc(req.params.id);
     batch.update(bookRef, { stockCount: admin.firestore.FieldValue.increment(1) });
 
     await batch.commit();
