@@ -26,6 +26,8 @@ bookApp.get("/", async (req, res) => {
 
 bookApp.post("/", async (req, res) => {
   const user = req.body;
+  user.stockCount = 0;
+  user.reservationCount = 0;
 
   await db.collection("books").doc(user["title"]).set(user);
 
