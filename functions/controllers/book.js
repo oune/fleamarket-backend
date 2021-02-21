@@ -25,6 +25,7 @@ bookApp.get("/", async (req, res) => {
 
 bookApp.post("/:title/reservations", async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.title);
+  const reservationRef = db.collection("reservations").doc();
 
   try {
     await db.runTransaction(async t => {
@@ -36,17 +37,16 @@ bookApp.post("/:title/reservations", async (req, res) => {
         reservation.title = req.params.title;
         reservation.isCancle = false;
 
-        await db.collection("reservations").add(reservation);
-        await db.collection("books").doc(req.params.title).update({
-          reservationCount: admin.firestore.FieldValue.increment(1)
-        });
+        await t.set(reservationRef, reservation);
+        await t.update(bookRef, {reservationCount: admin.firestore.FieldValue.increment(1)});
+        
       } else {
         throw new Error("no stock");
       }
 
     });
   } catch (e) {
-    res.send(421).send();
+    res.status(421).send("남은 재고가 없음");
   }
   res.status(201).send();
 });
