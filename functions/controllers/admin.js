@@ -35,6 +35,7 @@ adminApp.delete("/books/:id", async (req, res) => {
 adminApp.post("/books/:id/stocks", async (req, res) => {
     const stock = req.body;
     stock.bookId = req.params.id;
+    stock.isSold = false;
 
     const batch = db.batch();
 

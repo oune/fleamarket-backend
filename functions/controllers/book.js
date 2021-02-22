@@ -51,8 +51,8 @@ bookApp.post("/:bookId/reservations", async (req, res) => {
   res.status(201).send();
 });
 
-bookApp.get("/:title/reservations", async (req, res) => {
-  const snapshot = await db.collection("reservations").where("title", "==", req.params.title).where("isCancle", "==", false).get();
+bookApp.get("/:bookId/reservations", async (req, res) => {
+  const snapshot = await db.collection("reservations").where("bookId", "==", req.params.bookId).where("isCancle", "==", false).get();
 
   let reservations = [];
   snapshot.forEach((doc) => {
