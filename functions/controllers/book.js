@@ -42,16 +42,17 @@ bookApp.post("/:bookId/reservations", async (req, res) => {
 
         await t.set(reservationRef, reservation);
         await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(1) });
-        
-        console.log(reservation.password);
       } else {
         throw new Error("no stock");
       }
 
     });
   } catch (e) {
-    console.log(e)
-    res.status(421).send("트랜잭션 실패");
+    if (e.message === "no stock") {
+      res.status(421).send("남은 재고 없음");
+    } else {
+      res.status(421).send("알수없는 에러");
+    }
   }
   res.status(201).send();
 });
