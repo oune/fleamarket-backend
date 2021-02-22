@@ -102,7 +102,6 @@ bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
-      //bcrypt.compareSync(myPlaintextPassword, hash), doc.data().password === req.params.password
       const res = bcrypt.compareSync(req.params.password, doc.data().password);
       
       if (res) {
