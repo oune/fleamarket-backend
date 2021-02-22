@@ -26,6 +26,8 @@ bookApp.get("/", async (req, res) => {
 bookApp.post("/:bookId/reservations", async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
+  const bcrypt = require('bcrypt');
+  const saltRounds = 10;
 
   try {
     await db.runTransaction(async t => {
@@ -36,17 +38,21 @@ bookApp.post("/:bookId/reservations", async (req, res) => {
         const reservation = req.body;
         reservation.bookId = req.params.bookId;
         reservation.isCancle = false;
+        reservation.password = bcrypt.hashSync(reservation.password, saltRounds);
 
         await t.set(reservationRef, reservation);
-        await t.update(bookRef, {reservationCount: admin.firestore.FieldValue.increment(1)});
-
+        await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(1) });
       } else {
         throw new Error("no stock");
       }
 
     });
   } catch (e) {
-    res.status(421).send("트랜잭션 실패");
+    if (e.message === "no stock") {
+      res.status(421).send("남은 재고 없음");
+    } else {
+      res.status(421).send("알수없는 에러");
+    }
   }
   res.status(201).send();
 });
@@ -90,12 +96,15 @@ bookApp.put("/reservations/:id", async (req, res) => {
 bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
+  const bcrypt = require('bcrypt');
+  const saltRounds = 10;
 
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
-
-      if (doc.data().password === req.params.password) {
+      const res = bcrypt.compareSync(req.params.password, doc.data().password);
+      
+      if (res) {
         await t.update(reservationRef, { "isCancle": true });
         await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
       } else {
@@ -103,7 +112,12 @@ bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
       }
     });
   } catch (e) {
-    res.status(421).send("트랜잭션 실패");
+    if (e.message === "비밀번호가 다름") {
+      res.status(421).send("비밀번호가 다름");
+    } else {
+      console.log(e)
+      res.status(421).send("알수없는 에러");
+    }
   }
 
   res.status(200).send();
