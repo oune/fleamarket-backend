@@ -26,6 +26,8 @@ bookApp.get("/", async (req, res) => {
 bookApp.post("/:bookId/reservations", async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
+  const bcrypt = require('bcrypt');
+  const saltRounds = 10;
 
   try {
     await db.runTransaction(async t => {
@@ -36,16 +38,19 @@ bookApp.post("/:bookId/reservations", async (req, res) => {
         const reservation = req.body;
         reservation.bookId = req.params.bookId;
         reservation.isCancle = false;
+        reservation.password = bcrypt.hashSync(reservation.password, saltRounds);
 
         await t.set(reservationRef, reservation);
-        await t.update(bookRef, {reservationCount: admin.firestore.FieldValue.increment(1)});
-
+        await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(1) });
+        
+        console.log(reservation.password);
       } else {
         throw new Error("no stock");
       }
 
     });
   } catch (e) {
+    console.log(e)
     res.status(421).send("트랜잭션 실패");
   }
   res.status(201).send();
