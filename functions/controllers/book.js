@@ -10,20 +10,21 @@ const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
 
-// 필요한 필드가 존재하는지 확인 하는 미들웨어
 function checkField(fields) {
   return (req, res, next) => {
-      const fails = [];
-      for (const field of fields) {
-          if (!req.body[field]) {
-              fails.push(field);
-          }
+    const fails = [];
+    for (const field of fields) {
+      if (!req.body[field]) {
+        fails.push(field);
       }
-      if (fails.length > 0) {
-          res.status(400).send(`${fails.join(',')} required`);
-      } else {
-          next();
-      }
+    }
+    if (fails.length == 1) {
+      res.status(400).send(`${fails.join(',')} is required`);
+    } else if (fails.length > 1) {
+      res.status(400).send(`${fails.join(',')} are required`);
+    } else {
+      next();
+    }
   };
 }
 
@@ -38,7 +39,7 @@ bookApp.get("/", async (req, res) => {
     snapshot.forEach((doc) => {
       let id = doc.id;
       let data = doc.data();
-  
+
       books.push({ id, ...data });
     });
 
@@ -50,20 +51,20 @@ async function getSnapshot(query) {
   try {
     let bookRef = db.collection("books");
     if (Object.keys(query).length !== 0) {
-      if (query.hasOwnProperty("title")){
+      if (query.hasOwnProperty("title")) {
         bookRef = bookRef.where("title", "==", query.title);
       }
-      if (query.hasOwnProperty("auther")){
+      if (query.hasOwnProperty("auther")) {
         bookRef = bookRef.where("auther", "==", query.auther);
       }
-      if (query.hasOwnProperty("publisher")){
+      if (query.hasOwnProperty("publisher")) {
         bookRef = bookRef.where("publisher", "==", query.publisher);
-      } 
+      }
     }
-    
+
     return await bookRef.get();
-  } catch(e) {
-    console.log(e) 
+  } catch (e) {
+    console.log(e)
     return null;
   }
 }

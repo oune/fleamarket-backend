@@ -8,7 +8,25 @@ const adminApp = express();
 
 adminApp.use(cors({ origin: true }));
 
-adminApp.post("/books", async (req, res) => {
+function checkField(fields) {
+    return (req, res, next) => {
+      const fails = [];
+      for (const field of fields) {
+        if (!req.body[field]) {
+          fails.push(field);
+        }
+      }
+      if (fails.length == 1) {
+        res.status(400).send(`${fails.join(',')} is required`);
+      } else if (fails.length > 1) {
+        res.status(400).send(`${fails.join(',')} are required`);
+      } else {
+        next();
+      }
+    };
+  }
+
+adminApp.post("/books", checkField(["title", "publisher", "auther"]), async (req, res) => {
     const user = req.body;
     user.stockCount = 0;
     user.reservationCount = 0;
@@ -32,7 +50,7 @@ adminApp.delete("/books/:id", async (req, res) => {
     res.status(200).send();
 });
 
-adminApp.post("/books/:id/stocks", async (req, res) => {
+adminApp.post("/books/:id/stocks", checkField(["name", "studentId", "price", "state"]), async (req, res) => {
     const stock = req.body;
     stock.bookId = req.params.id;
     stock.isSold = false;
