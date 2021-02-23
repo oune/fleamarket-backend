@@ -126,6 +126,11 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
   const bcrypt = require('bcrypt');
   const query = req.query;
 
+  if (Object.keys(query).length === 0) {
+    res.status(400).send("password require");
+    return;
+  }
+
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
