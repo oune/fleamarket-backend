@@ -120,15 +120,16 @@ bookApp.get("/:bookId/reservations", async (req, res) => {
   res.status(200).send(JSON.stringify(reservations));
 });
 
-bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {// 구조를 더 좋게 할수 있지 않을까?
+bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
   const bcrypt = require('bcrypt');
+  const query = req.query;
 
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
-      const res = bcrypt.compareSync(req.params.password, doc.data().password);
+      const res = bcrypt.compareSync(query.password, doc.data().password);
 
       if (res) {
         await t.update(reservationRef, { "isCancle": true });
