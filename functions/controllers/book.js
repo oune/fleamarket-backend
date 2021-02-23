@@ -49,9 +49,7 @@ bookApp.get("/", async (req, res) => {
 async function getSnapshot(query) {
   try {
     let bookRef = db.collection("books");
-    if (Object.keys(query).length === 0) {
-
-    } else {
+    if (Object.keys(query).length !== 0) {
       if (query.hasOwnProperty("title")){
         bookRef = bookRef.where("title", "==", query.title);
       }
@@ -62,7 +60,7 @@ async function getSnapshot(query) {
         bookRef = bookRef.where("publisher", "==", query.publisher);
       } 
     }
-
+    
     return await bookRef.get();
   } catch(e) {
     console.log(e) 
@@ -125,7 +123,6 @@ bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {// êµ
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
   const bcrypt = require('bcrypt');
-  const saltRounds = 10;
 
   try {
     await db.runTransaction(async t => {
