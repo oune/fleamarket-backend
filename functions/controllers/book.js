@@ -74,15 +74,7 @@ bookApp.get("/:bookId/reservations", async (req, res) => {
   res.status(200).send(JSON.stringify(reservations));
 });
 
-bookApp.put("/reservations/:id", async (req, res) => {
-  const body = req.body;
-
-  await db.collection("reservations").doc(req.params.id).update(body);
-
-  res.status(200).send();
-});
-
-bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
+bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {// 구조를 더 좋게 할수 있지 않을까?
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
   const bcrypt = require('bcrypt');
