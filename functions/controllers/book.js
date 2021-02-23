@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require('cors');
 
 admin.initializeApp();
+
 const db = admin.firestore();
 const bookApp = express();
 
