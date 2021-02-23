@@ -50,7 +50,10 @@ bookApp.post("/:bookId/reservations", async (req, res) => {
   } catch (e) {
     if (e.message === "no stock") {
       res.status(421).send("남은 재고 없음");
+    } else if (e.message === "Cannot read property 'stockCount' of undefined") {
+      res.status(421).send("문서가 존재 하지 않음");
     } else {
+      console.log(e);
       res.status(421).send("알수없는 에러");
     }
   }
@@ -71,8 +74,8 @@ bookApp.get("/:bookId/reservations", async (req, res) => {
   res.status(200).send(JSON.stringify(reservations));
 });
 
-bookApp.get("/:studentId/:name/reservations", async (req, res) => {
-  const snapshot = await db.collection("reservations").where("studentId", "==", req.params.studentId).where("name", "==", req.params.name).where("isCancle", "==", false).get();
+bookApp.get("/users/:studentId/reservations", async (req, res) => {
+  const snapshot = await db.collection("reservations").where("studentId", "==", req.params.studentId).where("isCancle", "==", false).get();
 
   let reservations = [];
   snapshot.forEach((doc) => {
@@ -82,6 +85,7 @@ bookApp.get("/:studentId/:name/reservations", async (req, res) => {
     reservations.push({ id, ...data });
   });
 
+  console.log("1")
   res.status(200).send(JSON.stringify(reservations));
 });
 
