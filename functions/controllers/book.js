@@ -15,7 +15,7 @@ function checkField(fields) {
   return (req, res, next) => {
       const fails = [];
       for (const field of fields) {
-          if (!req.query[field]) {
+          if (!req.body[field]) {
               fails.push(field);
           }
       }
@@ -70,7 +70,7 @@ async function getSnapshot(query) {
   }
 }
 
-bookApp.post("/:bookId/reservations", async (req, res) => {
+bookApp.post("/:bookId/reservations", checkField(["password", "name", "studentId", "time", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
   const bcrypt = require('bcrypt');
