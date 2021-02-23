@@ -74,21 +74,6 @@ bookApp.get("/:bookId/reservations", async (req, res) => {
   res.status(200).send(JSON.stringify(reservations));
 });
 
-bookApp.get("/users/:studentId/reservations", async (req, res) => {
-  const snapshot = await db.collection("reservations").where("studentId", "==", req.params.studentId).where("isCancle", "==", false).get();
-
-  let reservations = [];
-  snapshot.forEach((doc) => {
-    let id = doc.id;
-    let data = doc.data();
-
-    reservations.push({ id, ...data });
-  });
-
-  console.log("1")
-  res.status(200).send(JSON.stringify(reservations));
-});
-
 bookApp.put("/reservations/:id", async (req, res) => {
   const body = req.body;
 
@@ -127,8 +112,8 @@ bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
   res.status(200).send();
 });
 
-bookApp.get("/:id/stocks", async (req, res) => {
-  const snapshot = await db.collection("stocks").where("bookId", "==", req.params.id).get();
+bookApp.get("/:bookId/stocks", async (req, res) => {
+  const snapshot = await db.collection("stocks").where("bookId", "==", req.params.bookId).get();
 
   let stocks = [];
   snapshot.forEach((doc) => {
