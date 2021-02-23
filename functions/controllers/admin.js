@@ -58,13 +58,13 @@ adminApp.put("/stocks/:id", async (req, res) => {
     res.status(200).send();
 });
 
-adminApp.delete("/:title/stocks/:id", async (req, res) => {
+adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
     const batch = db.batch();
 
     const stockRef = db.collection("stocks").doc(req.params.id);
     batch.delete(stockRef);
 
-    const bookRef = db.collection("books").doc(req.params.title);
+    const bookRef = db.collection("books").doc(req.params.bookId);
     batch.update(bookRef, {stockCount: admin.firestore.FieldValue.increment(-1)});
 
     await batch.commit();
