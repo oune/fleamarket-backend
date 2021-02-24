@@ -34,13 +34,13 @@ async function getSnapshot(query) {
   try {
     let bookRef = db.collection("books");
     if (Object.keys(query).length !== 0) {
-      if (query.hasOwnProperty("title")) {
+      if (Object.prototype.hasOwnProperty.call(query, "title")) {
         bookRef = bookRef.where("title", "==", query.title);
       }
-      if (query.hasOwnProperty("auther")) {
+      if (Object.prototype.hasOwnProperty.call(query, "auther")) {
         bookRef = bookRef.where("auther", "==", query.auther);
       }
-      if (query.hasOwnProperty("publisher")) {
+      if (Object.prototype.hasOwnProperty.call(query, "publisher")) {
         bookRef = bookRef.where("publisher", "==", query.publisher);
       }
     }
@@ -52,7 +52,7 @@ async function getSnapshot(query) {
   }
 }
 
-bookApp.post("/:bookId/reservations", check.possibleField(["password", "name", "studentId", "time", "title"]), async (req, res) => {
+bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
   const bcrypt = require('bcrypt');

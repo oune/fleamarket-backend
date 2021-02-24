@@ -3,5 +3,5 @@ module.exports = {
   ...require('./controllers/admin'),
   ...require('./controllers/user'),
   ...require('./controllers/reservation'),
-  ...require('./controllers/test')
+  // ...require('./controllers/test')
 }

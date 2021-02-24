@@ -1,4 +1,4 @@
-function possibleField(fields) {
+function requireField(fields) {
     return (req, res, next) => {
         const fails = [];
         for (const field of fields) {
@@ -6,13 +6,12 @@ function possibleField(fields) {
                 fails.push(field);
             }
         }
-        if (fails.length == 1) {
+        if (fails.length === 1) {
             res.status(400).send(`${fails.join(',')} is required`);
         } else if (fails.length > 1) {
             res.status(400).send(`${fails.join(',')} are required`);
-        } else {
-            next();
         }
+        next();
     };
 }
 
@@ -24,15 +23,15 @@ function impossibleField(fields) {
                 fails.push(field);
             }
         }
-        if (fails.length == 1) {
-            res.status(400).send(`${fails.join(',')} cannot be changed`);
+        if (fails.length === 1) {
+            res.status(400).send(`${fails.join(',')} is impossible`);
         } else if (fails.length > 1) {
-            res.status(400).send(`${fails.join(',')} cannot be changed`);
-        } else {
-            next();
+            res.status(400).send(`${fails.join(',')} are impossible`);
         }
+        next();
+
     };
 }
 
-module.exports.possibleField = possibleField;
+module.exports.requireField = requireField;
 module.exports.impossibleField = impossibleField;

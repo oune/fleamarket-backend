@@ -9,7 +9,7 @@ const adminApp = express();
 
 adminApp.use(cors({ origin: true }));
 
-adminApp.post("/books", check.possibleField(["title", "publisher", "auther"]), async (req, res) => {
+adminApp.post("/books", check.requireField(["title", "publisher", "auther"]), async (req, res) => {
   const user = req.body;
   user.stockCount = 0;
   user.reservationCount = 0;
@@ -33,7 +33,7 @@ adminApp.delete("/books/:id", async (req, res) => {
   res.status(200).send();
 });
 
-adminApp.post("/books/:id/stocks", check.possibleField(["name", "studentId", "price", "state"]), async (req, res) => {
+adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "price", "state"]), async (req, res) => {
   const stock = req.body;
   stock.bookId = req.params.id;
   stock.isSold = false;
