@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
+const check = require('../controllers/middle');
 const express = require("express");
 const cors = require('cors');
 
@@ -8,43 +9,7 @@ const adminApp = express();
 
 adminApp.use(cors({ origin: true }));
 
-function impossibleChange(fields) {
-  return (req, res, next) => {
-    const fails = [];
-    for (const field of fields) {
-      if (req.body[field]) {
-        fails.push(field);
-      }
-    }
-    if (fails.length == 1) {
-      res.status(400).send(`${fails.join(',')} cannot be changed`);
-    } else if (fails.length > 1) {
-      res.status(400).send(`${fails.join(',')} cannot be changed`);
-    } else {
-      next();
-    }
-  };
-}
-
-function checkField(fields) {
-  return (req, res, next) => {
-    const fails = [];
-    for (const field of fields) {
-      if (!req.body[field]) {
-        fails.push(field);
-      }
-    }
-    if (fails.length == 1) {
-      res.status(400).send(`${fails.join(',')} is required`);
-    } else if (fails.length > 1) {
-      res.status(400).send(`${fails.join(',')} are required`);
-    } else {
-      next();
-    }
-  };
-}
-
-adminApp.post("/books", checkField(["title", "publisher", "auther"]), async (req, res) => {
+adminApp.post("/books", check.possibleField(["title", "publisher", "auther"]), async (req, res) => {
   const user = req.body;
   user.stockCount = 0;
   user.reservationCount = 0;
@@ -54,7 +19,7 @@ adminApp.post("/books", checkField(["title", "publisher", "auther"]), async (req
   res.status(201).send();
 });
 
-adminApp.put("/books/:id", impossibleChange(["reservationCount", "stockCount"]), async (req, res) => {
+adminApp.put("/books/:id", check.impossibleField(["reservationCount", "stockCount"]), async (req, res) => {
   const body = req.body;
 
   await db.collection("books").doc(req.params.id).update(body);
@@ -68,7 +33,7 @@ adminApp.delete("/books/:id", async (req, res) => {
   res.status(200).send();
 });
 
-adminApp.post("/books/:id/stocks", checkField(["name", "studentId", "price", "state"]), async (req, res) => {
+adminApp.post("/books/:id/stocks", check.possibleField(["name", "studentId", "price", "state"]), async (req, res) => {
   const stock = req.body;
   stock.bookId = req.params.id;
   stock.isSold = false;
@@ -86,7 +51,7 @@ adminApp.post("/books/:id/stocks", checkField(["name", "studentId", "price", "st
   res.status(201).send();
 });
 
-adminApp.put("/stocks/:id", impossibleChange(["bookId"]), async (req, res) => {
+adminApp.put("/stocks/:id", check.impossibleField(["bookId"]), async (req, res) => {
   const body = req.body;
 
   await db.collection("stocks").doc(req.params.id).update(body);

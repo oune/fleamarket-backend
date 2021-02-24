@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
+const check = require('../controllers/middle');
 const express = require("express");
 const cors = require('cors');
 
@@ -9,24 +10,6 @@ const db = admin.firestore();
 const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
-
-function checkField(fields) {
-  return (req, res, next) => {
-    const fails = [];
-    for (const field of fields) {
-      if (!req.body[field]) {
-        fails.push(field);
-      }
-    }
-    if (fails.length == 1) {
-      res.status(400).send(`${fails.join(',')} is required`);
-    } else if (fails.length > 1) {
-      res.status(400).send(`${fails.join(',')} are required`);
-    } else {
-      next();
-    }
-  };
-}
 
 bookApp.get("/", async (req, res) => {
   const query = req.query;
@@ -69,7 +52,7 @@ async function getSnapshot(query) {
   }
 }
 
-bookApp.post("/:bookId/reservations", checkField(["password", "name", "studentId", "time", "title"]), async (req, res) => {
+bookApp.post("/:bookId/reservations", check.possibleField(["password", "name", "studentId", "time", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
   const bcrypt = require('bcrypt');
