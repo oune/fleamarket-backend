@@ -1,29 +1,58 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
+const check = require('../controllers/middle');
 const express = require("express");
 const cors = require('cors');
 
 admin.initializeApp();
+
 const db = admin.firestore();
 const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
 
 bookApp.get("/", async (req, res) => {
-  const snapshot = await db.collection("books").get();
+  const query = req.query;
+  const snapshot = await getSnapshot(query);
 
-  let books = [];
-  snapshot.forEach((doc) => {
-    let id = doc.id;
-    let data = doc.data();
+  if (snapshot === null) {
+    res.status(400).send("올바르지 않은 쿼리");
+  } else {
+    let books = [];
+    snapshot.forEach((doc) => {
+      let id = doc.id;
+      let data = doc.data();
 
-    books.push({ id, ...data });
-  });
+      books.push({ id, ...data });
+    });
 
-  res.status(200).send(JSON.stringify(books));
+    res.status(200).send(JSON.stringify(books));
+  }
 });
 
-bookApp.post("/:bookId/reservations", async (req, res) => {
+async function getSnapshot(query) {
+  try {
+    let bookRef = db.collection("books");
+    if (Object.keys(query).length !== 0) {
+      if (Object.prototype.hasOwnProperty.call(query, "title")) {
+        bookRef = bookRef.where("title", "==", query.title);
+      }
+      if (Object.prototype.hasOwnProperty.call(query, "auther")) {
+        bookRef = bookRef.where("auther", "==", query.auther);
+      }
+      if (Object.prototype.hasOwnProperty.call(query, "publisher")) {
+        bookRef = bookRef.where("publisher", "==", query.publisher);
+      }
+    }
+
+    return await bookRef.get();
+  } catch (e) {
+    console.log(e)
+    return null;
+  }
+}
+
+bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
   const bcrypt = require('bcrypt');
@@ -50,7 +79,10 @@ bookApp.post("/:bookId/reservations", async (req, res) => {
   } catch (e) {
     if (e.message === "no stock") {
       res.status(421).send("남은 재고 없음");
+    } else if (e.message === "Cannot read property 'stockCount' of undefined") {
+      res.status(421).send("문서가 존재 하지 않음");
     } else {
+      console.log(e);
       res.status(421).send("알수없는 에러");
     }
   }
@@ -71,39 +103,22 @@ bookApp.get("/:bookId/reservations", async (req, res) => {
   res.status(200).send(JSON.stringify(reservations));
 });
 
-bookApp.get("/:studentId/:name/reservations", async (req, res) => {
-  const snapshot = await db.collection("reservations").where("studentId", "==", req.params.studentId).where("name", "==", req.params.name).where("isCancle", "==", false).get();
-
-  let reservations = [];
-  snapshot.forEach((doc) => {
-    let id = doc.id;
-    let data = doc.data();
-
-    reservations.push({ id, ...data });
-  });
-
-  res.status(200).send(JSON.stringify(reservations));
-});
-
-bookApp.put("/reservations/:id", async (req, res) => {
-  const body = req.body;
-
-  await db.collection("reservations").doc(req.params.id).update(body);
-
-  res.status(200).send();
-});
-
-bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
+bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
   const bcrypt = require('bcrypt');
-  const saltRounds = 10;
+  const query = req.query;
+
+  if (Object.keys(query).length === 0) {
+    res.status(400).send("password require");
+    return;
+  }
 
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
-      const res = bcrypt.compareSync(req.params.password, doc.data().password);
-      
+      const res = bcrypt.compareSync(query.password, doc.data().password);
+
       if (res) {
         await t.update(reservationRef, { "isCancle": true });
         await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
@@ -123,8 +138,8 @@ bookApp.delete("/:bookId/reservations/:id/:password", async (req, res) => {
   res.status(200).send();
 });
 
-bookApp.get("/:id/stocks", async (req, res) => {
-  const snapshot = await db.collection("stocks").where("bookId", "==", req.params.id).get();
+bookApp.get("/:bookId/stocks", async (req, res) => {
+  const snapshot = await db.collection("stocks").where("bookId", "==", req.params.bookId).get();
 
   let stocks = [];
   snapshot.forEach((doc) => {
