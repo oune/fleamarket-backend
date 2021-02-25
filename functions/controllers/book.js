@@ -33,18 +33,18 @@ bookApp.get("/", async (req, res) => {
 async function getSnapshot(query) {
   try {
     let bookRef = db.collection("books");
-    if (Object.keys(query).length !== 0) {
-      if (Object.prototype.hasOwnProperty.call(query, "title")) {
-        bookRef = bookRef.where("title", "==", query.title);
-      }
-      if (Object.prototype.hasOwnProperty.call(query, "auther")) {
-        bookRef = bookRef.where("auther", "==", query.auther);
-      }
-      if (Object.prototype.hasOwnProperty.call(query, "publisher")) {
-        bookRef = bookRef.where("publisher", "==", query.publisher);
-      }
+    if (Object.prototype.hasOwnProperty.call(query, "title")) {
+      bookRef = bookRef.where("title", "==", query.title);
     }
-
+    if (Object.prototype.hasOwnProperty.call(query, "auther")) {
+      bookRef = bookRef.where("auther", "==", query.auther);
+    }
+    if (Object.prototype.hasOwnProperty.call(query, "publisher")) {
+      bookRef = bookRef.where("publisher", "==", query.publisher);
+    }
+    if (Object.prototype.hasOwnProperty.call(query, "start") && Object.prototype.hasOwnProperty.call(query, "len")) {
+      bookRef = bookRef.orderBy('title').startAfter(query.start).limit(Number(query.len));
+    }
     return await bookRef.get();
   } catch (e) {
     console.log(e)
@@ -52,7 +52,19 @@ async function getSnapshot(query) {
   }
 }
 
-bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "title"]), async (req, res) => {
+bookApp.get("/search", async (req, res) => {
+  const text = req.query.text;
+  const snapshot = await db.collection('books').get();
+  const result = snapshot.docs.filter(doc => {
+    const {title, author, publisher} = doc.data();
+    return title.includes(text) || author.includes(text) || publisher.includes(text);
+   }).map(doc => doc.data());
+   
+   console.log(result);
+   res.json(result);
+});
+
+bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "date", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
   const bcrypt = require('bcrypt');
@@ -61,9 +73,9 @@ bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "s
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(bookRef);
-      const resCount = doc.data().stockCount - doc.data().reservationCount;
+      const resCount = doc.data().stockCount > doc.data().reservationCount;
 
-      if (resCount > 0) {
+      if (resCount) {
         const reservation = req.body;
         reservation.bookId = req.params.bookId;
         reservation.isCancle = false;
@@ -117,7 +129,7 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
-      const res = bcrypt.compareSync(query.password, doc.data().password);
+      const res = await bcrypt.compare(query.password, doc.data().password);
 
       if (res) {
         await t.update(reservationRef, { "isCancle": true });
@@ -128,10 +140,13 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
     });
   } catch (e) {
     if (e.message === "비밀번호가 다름") {
-      res.status(421).send("비밀번호가 다름");
-    } else {
+      return res.status(421).send("비밀번호가 다름");
+    } else if (e.message === "Cannot read property 'password' of undefined") {
+      return res.status(421).send("존재 하지 않는 문서 아이디");
+    }
+    else {
       console.log(e)
-      res.status(421).send("알수없는 에러");
+      return res.status(421).send("알수없는 에러");
     }
   }
 
