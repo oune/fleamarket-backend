@@ -9,12 +9,57 @@ const reservationApp = express();
 
 reservationApp.use(cors({ origin: true }));
 
-reservationApp.put("/:id", check.impossibleField(["password", "bookId", "isCancle", "title"]), async (req, res) => {
-    const body = req.body;
-  
-    await db.collection("reservations").doc(req.params.id).update(body);
-  
-    res.status(200).send();
-  });
+reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
+  const body = req.body;
+  const reservationRef = db.collection("reservations").doc(req.params.id);
+  const bcrypt = require('bcrypt');
+
+  try {
+    await db.runTransaction(async t => {
+      const passwordRef = await t.get(reservationRef);
+      const password = await passwordRef.data().password;
+      const match = await bcrypt.compare(req.query.password, password);
+      const saltRounds = 10;
+
+      if (match) {
+        if (body.hasOwnProperty("password")) {
+          body.password = bcrypt.hashSync(body.password, saltRounds);
+        }
+        await t.update(reservationRef, body);
+      } else {
+        throw new Error("wrong password");
+      }
+    });
+  } catch (e) {
+    if (e.message === "wrong password") {
+      return res.status(421).send("wrong password");
+    } else {
+      console.log(e);
+      return res.status(421).send("알수없는 에러");
+    }
+  }
+  res.status(200).send();
+});
+
+reservationApp.get("/:id/password", checkRequireField() ,async (req, res) => {
+  const bcrypt = require('bcrypt');
+  const passwordRef = await db.collection("reservations").doc(req.params.id).get();
+  const password = await passwordRef.data().password;
+  const match = await bcrypt.compare(req.query.password, password);
+
+  if (!match) {
+    return res.status(400).send("wrong password");
+  }
+  res.status(200).send();
+});
+
+function checkRequireField() {
+  return (req, res, next) => {
+    if (!Object.prototype.hasOwnProperty.call(req.query, "password")) {
+        return res.status(400).send(`password is required`);
+    }
+    next();
+};
+}
 
 exports.reservations = functions.https.onRequest(reservationApp);
