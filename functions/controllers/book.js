@@ -42,8 +42,12 @@ async function getSnapshot(query) {
     if (Object.prototype.hasOwnProperty.call(query, "publisher")) {
       bookRef = bookRef.where("publisher", "==", query.publisher);
     }
-    if (Object.prototype.hasOwnProperty.call(query, "start") && Object.prototype.hasOwnProperty.call(query, "len")) {
-      bookRef = bookRef.orderBy('title').startAfter(query.start).limit(Number(query.len));
+    if (Object.prototype.hasOwnProperty.call(query, "len")) {
+      if (Object.prototype.hasOwnProperty.call(query, "start")) {
+        bookRef = bookRef.orderBy('title').startAfter(query.start).limit(Number(query.len));
+      } else {
+        bookRef = bookRef.orderBy('title').limit(Number(query.len));
+      }
     }
     return await bookRef.get();
   } catch (e) {
@@ -52,15 +56,16 @@ async function getSnapshot(query) {
   }
 }
 
-bookApp.get("/search", async (req, res) => {
+bookApp.get("/search", async (req, res) => {// 정상작동하지 않음
   const text = req.query.text;
   const snapshot = await db.collection('books').get();
   const result = snapshot.docs.filter(doc => {
     const {title, author, publisher} = doc.data();
+    console.log(typeof title);
     return title.includes(text) || author.includes(text) || publisher.includes(text);
    }).map(doc => doc.data());
    
-   console.log(result);
+  //  console.log(result);
    res.json(result);
 });
 
