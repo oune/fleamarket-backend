@@ -33,6 +33,28 @@ adminApp.delete("/books/:id", async (req, res) => {
   res.status(200).send();
 });
 
+adminApp.delete("/new/books/:id", async (req, res) => {
+  const batch = db.batch();
+
+  const bookRef = await db.collection("books").doc(req.params.id);
+  batch.delete(bookRef);
+
+  const stockSnapshot = await db.collection("stocks").where("bookId", "==", req.params.id).get();
+  stockSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  const reservationSnapshot = await db.collection("reservations").where("bookId", "==", req.params.id).get();
+  reservationSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+
+  await batch.commit();
+
+  res.status(200).send();
+});
+
 adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "price", "state"]), async (req, res) => {
   const stock = req.body;
   stock.bookId = req.params.id;
