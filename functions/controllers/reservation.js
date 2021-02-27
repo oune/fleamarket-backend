@@ -10,19 +10,20 @@ const reservationApp = express();
 reservationApp.use(cors({ origin: true }));
 
 reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
-  const body = req.body;
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bcrypt = require('bcrypt');
+  const body = req.body;
 
   try {
     await db.runTransaction(async t => {
       const passwordRef = await t.get(reservationRef);
       const password = await passwordRef.data().password;
       const match = await bcrypt.compare(req.query.password, password);
+
       const saltRounds = 10;
 
       if (match) {
-        if (body.hasOwnProperty("password")) {
+        if (Object.prototype.hasOwnProperty.call(body, "password")) {
           body.password = bcrypt.hashSync(body.password, saltRounds);
         }
         await t.update(reservationRef, body);
@@ -38,7 +39,7 @@ reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId",
       return res.status(421).send("알수없는 에러");
     }
   }
-  res.status(200).send();
+  return res.status(200).send();
 });
 
 reservationApp.get("/:id/password", checkRequireField() ,async (req, res) => {
@@ -50,7 +51,7 @@ reservationApp.get("/:id/password", checkRequireField() ,async (req, res) => {
   if (!match) {
     return res.status(400).send("wrong password");
   }
-  res.status(200).send();
+  return res.status(200).send();
 });
 
 function checkRequireField() {
@@ -58,7 +59,7 @@ function checkRequireField() {
     if (!Object.prototype.hasOwnProperty.call(req.query, "password")) {
         return res.status(400).send(`password is required`);
     }
-    next();
+    return next();
 };
 }
 
