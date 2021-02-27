@@ -140,13 +140,16 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
   try {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
-      const res = await bcrypt.compare(query.password, doc.data().password);
+      const match = await bcrypt.compare(query.password, doc.data().password);
+      const available = await !(await t.get(reservationRef)).data().isCancle;
 
-      if (res) {
+      if (match && available) {
         await t.update(reservationRef, { "isCancle": true });
         await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
-      } else {
+      } else if (!match) {
         throw new Error("비밀번호가 다름");
+      } else if (!available) {
+        throw new Error("이미 취소된 예약");
       }
     });
   } catch (e) {
@@ -154,6 +157,8 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
       res.status(421).send("비밀번호가 다름");
     } else if (e.message === "Cannot read property 'password' of undefined") {
       res.status(421).send("존재 하지 않는 문서 아이디");
+    } else if (e.message === "이미 취소된 예약") {
+      res.status(421).send("이미 취소된 예약");
     }
     else {
       console.log(e)
