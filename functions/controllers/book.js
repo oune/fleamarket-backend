@@ -55,25 +55,7 @@ async function getSnapshot(query) {
     console.log(e)
     return null;
   }
-}
-
-bookApp.get("/search", async (req, res) => {
-  const text = req.query.text;
-  const snapshot = await db.collection('books').get();
-  const result = await snapshot.docs.filter(doc => {
-    const {title, author, publisher} = doc.data();
-    return title.includes(text) || author.includes(text) || publisher.includes(text);
-  });
-  const books = [];
-  result.forEach((doc) => {
-    let id = doc.id;
-    let data = doc.data();
-
-    books.push({ id, ...data });
-  });
-   
-  res.status(200).send(JSON.stringify(books));
-});
+};
 
 bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "date", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
