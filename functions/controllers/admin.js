@@ -54,15 +54,15 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
     const stock = req.body;
     stock.bookId = req.params.id;
     stock.isSold = false;
-  
+
     const batch = db.batch();
-  
+
     const stockRef = db.collection("stocks").doc();
     batch.set(stockRef, stock);
-  
+
     const bookRef = db.collection("books").doc(req.params.id);
     batch.update(bookRef, { stockCount: admin.firestore.FieldValue.increment(1) });
-  
+
     await batch.commit();
   } catch (e) {
     console.log(e);
@@ -91,6 +91,37 @@ adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
 
   await batch.commit();
 
+  res.status(200).send();
+});
+
+adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
+  const reservationRef = db.collection("reservations").doc(req.params.id);
+  const bookRef = db.collection("books").doc(req.params.bookId);
+
+  try {
+    await db.runTransaction(async t => {
+      const available = await !(await t.get(reservationRef)).data().isCancle;
+
+      if (available) {
+        await t.update(reservationRef, { "isCancle": true });
+        await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
+      } else if (!available) {
+        throw new Error("이미 취소된 예약");
+      }
+    });
+  } catch (e) {
+    if (e.message === "비밀번호가 다름") {
+      res.status(421).send("비밀번호가 다름");
+    } else if (e.message === "Cannot read property 'password' of undefined") {
+      res.status(421).send("존재 하지 않는 문서 아이디");
+    } else if (e.message === "이미 취소된 예약") {
+      res.status(421).send("이미 취소된 예약");
+    }
+    else {
+      console.log(e)
+      res.status(421).send("알수없는 에러");
+    }
+  }
   res.status(200).send();
 });
 
