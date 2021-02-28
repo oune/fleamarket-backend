@@ -55,7 +55,7 @@ async function getSnapshot(query) {
     console.log(e)
     return null;
   }
-};
+}
 
 bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "date", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
