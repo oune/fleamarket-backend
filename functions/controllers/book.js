@@ -123,7 +123,11 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
       const match = await bcrypt.compare(query.password, doc.data().password);
-      const available = await !(await t.get(reservationRef)).data().isCancle;
+      const available = !doc.data().isCancle;
+
+      if (Object.prototype.hasOwnProperty.call(doc.data(), "isSold")) {
+        throw new Error("이미 구매한 예약");
+      }
 
       if (match && available) {
         await t.update(reservationRef, { "isCancle": true });
@@ -141,6 +145,8 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
       res.status(421).send("존재 하지 않는 문서 아이디");
     } else if (e.message === "이미 취소된 예약") {
       res.status(421).send("이미 취소된 예약");
+    } else if (e.message === "이미 구매한 예약") {
+      res.status(421).send("이미 구매한 예약");
     }
     else {
       console.log(e)
