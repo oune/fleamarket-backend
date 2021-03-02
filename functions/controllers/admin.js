@@ -43,7 +43,6 @@ adminApp.delete("/books/:id", async (req, res) => {
     batch.delete(doc.ref);
   });
 
-
   await batch.commit();
 
   res.status(200).send();
@@ -110,9 +109,7 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
       }
     });
   } catch (e) {
-    if (e.message === "비밀번호가 다름") {
-      res.status(421).send("비밀번호가 다름");
-    } else if (e.message === "Cannot read property 'password' of undefined") {
+    if (e.message === "Cannot read property 'password' of undefined") {
       res.status(421).send("존재 하지 않는 문서 아이디");
     } else if (e.message === "이미 취소된 예약") {
       res.status(421).send("이미 취소된 예약");
