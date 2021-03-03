@@ -58,6 +58,15 @@ async function getSnapshot(query) {
   }
 }
 
+bookApp.get("/:bookId", async (req, res) => {
+  const bookId = req.params.bookId;
+  const bookRef = db.collection("books").doc(bookId);
+  const doc = await bookRef.get();
+  const id = doc.id;
+
+  res.status(200).send(JSON.stringify({ id, ...doc.data() }));
+});
+
 // 예약 추가
 bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "date", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
