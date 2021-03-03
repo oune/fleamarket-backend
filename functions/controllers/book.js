@@ -58,6 +58,7 @@ async function getSnapshot(query) {
   }
 }
 
+// 특정책 조회
 bookApp.get("/:bookId", async (req, res) => {
   const bookId = req.params.bookId;
   const bookRef = db.collection("books").doc(bookId);
