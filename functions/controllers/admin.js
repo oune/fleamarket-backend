@@ -100,7 +100,7 @@ adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
 });
 
 // 예약 수정
-adminApp.put("/reservations/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
+adminApp.put("/reservations/:id", check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bcrypt = require('bcrypt');
   const body = req.body;
