@@ -72,6 +72,7 @@ bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "s
         const reservation = req.body;
         reservation.bookId = req.params.bookId;
         reservation.isCancle = false;
+        reservation.isSold = false;
         reservation.password = bcrypt.hashSync(reservation.password, saltRounds);
 
         await t.set(reservationRef, reservation);
@@ -123,19 +124,21 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
     await db.runTransaction(async t => {
       const doc = await t.get(reservationRef);
       const match = await bcrypt.compare(query.password, doc.data().password);
-      const available = !doc.data().isCancle;
+      const isCancle = doc.data().isCancle;
+      const isSold = doc.data().isSold;
 
-      if (Object.prototype.hasOwnProperty.call(doc.data(), "isSold")) {
+      if (isCancle) {
+        throw new Error("이미 취소된 예약");
+      }
+      if (isSold) {
         throw new Error("이미 구매한 예약");
       }
 
-      if (match && available) {
+      if (match) {
         await t.update(reservationRef, { "isCancle": true });
         await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
-      } else if (!match) {
+      } else {
         throw new Error("비밀번호가 다름");
-      } else if (!available) {
-        throw new Error("이미 취소된 예약");
       }
     });
   } catch (e) {
