@@ -11,6 +11,7 @@ const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
 
+// 전체 목록 조회
 bookApp.get("/", async (req, res) => {
   const query = req.query;
   const snapshot = await getSnapshot(query);
@@ -57,6 +58,7 @@ async function getSnapshot(query) {
   }
 }
 
+// 예약 추가
 bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "studentId", "time", "date", "title"]), async (req, res) => {
   const bookRef = db.collection("books").doc(req.params.bookId);
   const reservationRef = db.collection("reservations").doc();
@@ -95,6 +97,7 @@ bookApp.post("/:bookId/reservations", check.requireField(["password", "name", "s
   res.status(201).send();
 });
 
+//특정 책의 예약 조회
 bookApp.get("/:bookId/reservations", async (req, res) => {
   const snapshot = await db.collection("reservations").where("bookId", "==", req.params.bookId).where("isCancle", "==", false).get();
 
@@ -109,6 +112,7 @@ bookApp.get("/:bookId/reservations", async (req, res) => {
   res.status(200).send(JSON.stringify(reservations));
 });
 
+// 예약 취소
 bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
@@ -160,6 +164,7 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
   res.status(200).send();
 });
 
+// 특정 책의 재고 조회
 bookApp.get("/:bookId/stocks", async (req, res) => {
   const snapshot = await db.collection("stocks").where("bookId", "==", req.params.bookId).get();
 

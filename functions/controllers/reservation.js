@@ -9,6 +9,7 @@ const reservationApp = express();
 
 reservationApp.use(cors({ origin: true }));
 
+// 특정 책의 예약 내용 수정
 reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title", "isSold"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bcrypt = require('bcrypt');
@@ -42,6 +43,7 @@ reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId",
   return res.status(200).send();
 });
 
+// 특정 예약의 비밀번호 조회
 reservationApp.get("/:id/password", checkRequireField() ,async (req, res) => {
   const bcrypt = require('bcrypt');
   const passwordRef = await db.collection("reservations").doc(req.params.id).get();

@@ -1,3 +1,4 @@
+// 가능한 필드 명시
 function requireField(fields) {
     return (req, res, next) => {
         const fails = [];
@@ -15,6 +16,7 @@ function requireField(fields) {
     };
 }
 
+// 불가능한 필드 명시
 function impossibleField(fields) {
     return (req, res, next) => {
         const fails = [];

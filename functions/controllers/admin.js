@@ -9,6 +9,7 @@ const adminApp = express();
 
 adminApp.use(cors({ origin: true }));
 
+// 도서 추가
 adminApp.post("/books", check.requireField(["title", "publisher", "author"]), async (req, res) => {
   const user = req.body;
   user.stockCount = 0;
@@ -19,6 +20,7 @@ adminApp.post("/books", check.requireField(["title", "publisher", "author"]), as
   res.status(201).send();
 });
 
+// 도서 내용 수정
 adminApp.put("/books/:id", check.impossibleField(["reservationCount", "stockCount"]), async (req, res) => {
   const body = req.body;
 
@@ -27,6 +29,7 @@ adminApp.put("/books/:id", check.impossibleField(["reservationCount", "stockCoun
   res.status(200).send();
 });
 
+// 도서 삭제
 adminApp.delete("/books/:id", async (req, res) => {
   const batch = db.batch();
 
@@ -48,6 +51,7 @@ adminApp.delete("/books/:id", async (req, res) => {
   res.status(200).send();
 });
 
+// 도서 재고 추가
 adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "price", "state"]), async (req, res) => {
   try {
     const stock = req.body;
@@ -71,6 +75,7 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
   res.status(201).send();
 });
 
+// 재고 내용 수정
 adminApp.put("/stocks/:id", check.impossibleField(["bookId"]), async (req, res) => {
   const body = req.body;
 
@@ -79,6 +84,7 @@ adminApp.put("/stocks/:id", check.impossibleField(["bookId"]), async (req, res) 
   res.status(200).send();
 });
 
+// 재고 삭제
 adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
   const batch = db.batch();
 
@@ -93,6 +99,7 @@ adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
   res.status(200).send();
 });
 
+// 예약 수정
 adminApp.put("/reservations/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bcrypt = require('bcrypt');
@@ -108,6 +115,7 @@ adminApp.put("/reservations/:id", checkRequireField(), check.impossibleField(["b
   return res.status(200).send();
 });
 
+// 예약 취소
 adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
