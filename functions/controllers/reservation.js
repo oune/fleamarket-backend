@@ -9,7 +9,7 @@ const reservationApp = express();
 
 reservationApp.use(cors({ origin: true }));
 
-reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
+reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title", "isSold"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bcrypt = require('bcrypt');
   const body = req.body;
