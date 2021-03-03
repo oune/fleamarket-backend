@@ -93,6 +93,21 @@ adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
   res.status(200).send();
 });
 
+adminApp.put("/reservations/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
+  const reservationRef = db.collection("reservations").doc(req.params.id);
+  const bcrypt = require('bcrypt');
+  const body = req.body;
+  const saltRounds = 10;
+
+  if (Object.prototype.hasOwnProperty.call(body, "password")) {
+    body.password = bcrypt.hashSync(body.password, saltRounds);
+  }
+
+  reservationRef.update(body);
+
+  return res.status(200).send();
+});
+
 adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bookRef = db.collection("books").doc(req.params.bookId);
@@ -104,7 +119,7 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
       if (available) {
         await t.update(reservationRef, { "isCancle": true });
         await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
-      } else if (!available) {
+      } else {
         throw new Error("이미 취소된 예약");
       }
     });
