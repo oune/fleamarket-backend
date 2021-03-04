@@ -39,13 +39,21 @@ bookApp.get("/:bookId", async (req, res) => {
   res.status(200).send(JSON.stringify({ id, ...doc.data() }));
 });
 
-bookApp.post("/test", async (req, res) => {
-  moment.tz.setDefault("Asia/Seoul");
-
-  console.log(moment().format('YYYY-MM-DD HH:mm:ss'));
+bookApp.post("/test", isValidTime(), async (req, res) => {
 
   res.status(200).send();
 });
+
+function isValidTime() {
+  moment.tz.setDefault("Asia/Seoul");
+
+  return (req, res, next) => {
+      if (! moment(new Date()).isBetween(new Date('2021-03-04 09:59:59'),new Date('2021-03-12 18:00:00'))) {
+        return res.status(421).send("예약할수 없는 시간입니다.");
+      }
+      next();
+  };
+}
 
 // 예약 추가
 bookApp.post(
