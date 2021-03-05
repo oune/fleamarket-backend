@@ -49,11 +49,11 @@ reservationApp.get("/:id/password", checkRequireField() ,async (req, res) => {
   const passwordRef = await db.collection("reservations").doc(req.params.id).get();
   const password = await passwordRef.data().password;
   const match = await bcrypt.compare(req.query.password, password);
+  const message = {};
 
-  if (!match) {
-    return res.status(400).send("wrong password");
-  }
-  return res.status(200).send();
+  message.success = match;
+
+  return res.status(200).send(JSON.stringify(message));
 });
 
 function checkRequireField() {
