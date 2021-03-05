@@ -9,7 +9,7 @@ const userApp = express();
 userApp.use(cors({ origin: true }));
 
 userApp.get("/:studentId/reservations", async (req, res) => {
-    const snapshot = await db.collection("reservations").where("studentId", "==", req.params.studentId).where("isCancle", "==", false).get();
+    const snapshot = await db.collection("reservations").where("studentId", "==", req.params.studentId).get();
   
     let reservations = [];
     snapshot.forEach((doc) => {

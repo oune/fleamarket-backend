@@ -11,8 +11,8 @@ const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
 
-const moment = require('moment');
-require('moment-timezone');
+// const moment = require('moment');
+// require('moment-timezone');
 
 // 전체 목록 조회
 bookApp.get("/", async (req, res) => {
@@ -39,21 +39,16 @@ bookApp.get("/:bookId", async (req, res) => {
   res.status(200).send(JSON.stringify({ id, ...doc.data() }));
 });
 
-bookApp.post("/test", isValidTime(), async (req, res) => {
+// function isValidTime() {
+//   moment.tz.setDefault("Asia/Seoul");
 
-  res.status(200).send();
-});
-
-function isValidTime() {
-  moment.tz.setDefault("Asia/Seoul");
-
-  return (req, res, next) => {
-      if (! moment(new Date()).isBetween(new Date('2021-03-04 09:59:59'),new Date('2021-03-12 18:00:00'))) {
-        return res.status(421).send("예약할수 없는 시간입니다.");
-      }
-      next();
-  };
-}
+//   return (req, res, next) => {
+//       if (! moment(new Date()).isBetween(new Date('2021-03-04 09:59:59'),new Date('2021-03-12 18:00:00'))) {
+//         return res.status(421).send("현재 예약할수 없는 시간입니다.");
+//       }
+//       next();
+//   };
+// }
 
 // 예약 추가
 bookApp.post(
@@ -81,7 +76,7 @@ bookApp.post(
           const reservation = req.body;
 
           reservation.bookId = req.params.bookId;
-          reservation.isCancle = false;
+          reservation.isCancel = false;
           reservation.isSold = false;
           reservation.password = bcrypt.hashSync(
             reservation.password,
@@ -117,13 +112,13 @@ bookApp.get("/:bookId/reservations", async (req, res) => {
   const snapshot = await db
     .collection("reservations")
     .where("bookId", "==", req.params.bookId)
-    .where("isCancle", "==", false)
     .get();
 
   let reservations = [];
   snapshot.forEach((doc) => {
     let id = doc.id;
     let data = doc.data();
+    delete data.password;
 
     reservations.push({ id, ...data });
   });
@@ -147,10 +142,10 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
     await db.runTransaction(async (t) => {
       const doc = await t.get(reservationRef);
       const match = await bcrypt.compare(query.password, doc.data().password);
-      const isCancle = doc.data().isCancle;
+      const isCancel = doc.data().isCancel;
       const isSold = doc.data().isSold;
 
-      if (isCancle) {
+      if (isCancel) {
         throw new Error("이미 취소된 예약");
       }
       if (isSold) {
@@ -158,7 +153,7 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
       }
 
       if (match) {
-        await t.update(reservationRef, { isCancle: true });
+        await t.update(reservationRef, { isCancel: true });
         await t.update(bookRef, {
           reservationCount: admin.firestore.FieldValue.increment(-1),
         });

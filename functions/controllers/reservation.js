@@ -10,7 +10,7 @@ const reservationApp = express();
 reservationApp.use(cors({ origin: true }));
 
 // 특정 책의 예약 내용 수정
-reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId", "isCancle", "title", "isSold"]), async (req, res) => {
+reservationApp.put("/:id", checkRequireField(), check.impossibleField(["bookId", "isCancel", "title", "isSold"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bcrypt = require('bcrypt');
   const body = req.body;

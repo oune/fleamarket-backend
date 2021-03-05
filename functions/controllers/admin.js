@@ -100,7 +100,7 @@ adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
 });
 
 // 예약 수정
-adminApp.put("/reservations/:id", check.impossibleField(["bookId", "isCancle", "title"]), async (req, res) => {
+adminApp.put("/reservations/:id", check.impossibleField(["bookId", "isCancel", "title"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
   const bcrypt = require('bcrypt');
   const body = req.body;
@@ -122,10 +122,10 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
 
   try {
     await db.runTransaction(async t => {
-      const available = await !(await t.get(reservationRef)).data().isCancle;
+      const available = await !(await t.get(reservationRef)).data().isCancel;
 
       if (available) {
-        await t.update(reservationRef, { "isCancle": true });
+        await t.update(reservationRef, { "isCancel": true });
         await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
       } else {
         throw new Error("이미 취소된 예약");
