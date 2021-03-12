@@ -11,9 +11,6 @@ const bookApp = express();
 
 bookApp.use(cors({ origin: true }));
 
-// const moment = require('moment');
-// require('moment-timezone');
-
 // 전체 목록 조회
 bookApp.get("/", async (req, res) => {
   const snapshot = await db.collection("books").get();
@@ -38,17 +35,6 @@ bookApp.get("/:bookId", async (req, res) => {
 
   res.status(200).send(JSON.stringify({ id, ...doc.data() }));
 });
-
-// function isValidTime() {
-//   moment.tz.setDefault("Asia/Seoul");
-
-//   return (req, res, next) => {
-//       if (! moment(new Date()).isBetween(new Date('2021-03-04 09:59:59'),new Date('2021-03-12 18:00:00'))) {
-//         return res.status(421).send("현재 예약할수 없는 시간입니다.");
-//       }
-//       next();
-//   };
-// }
 
 // 예약 추가
 bookApp.post(
@@ -102,6 +88,7 @@ bookApp.post(
         console.log(e);
         res.status(421).send("알수없는 에러");
       }
+      return;
     }
     res.status(201).send();
   }
