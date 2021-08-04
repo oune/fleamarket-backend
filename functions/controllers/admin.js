@@ -31,16 +31,17 @@ adminApp.put("/books/:id", check.impossibleField(["reservationCount", "stockCoun
 // 도서 삭제
 adminApp.delete("/books/:id", async (req, res) => {
   const batch = db.batch();
+  const bookId = req.params.id;
 
-  const bookRef = await db.collection("books").doc(req.params.id);
+  const bookRef = await db.collection("books").doc(bookId);
   batch.delete(bookRef);
 
-  const stockSnapshot = await db.collection("stocks").where("bookId", "==", req.params.id).get();
+  const stockSnapshot = await db.collection("stocks").where("bookId", "==", bookId).get();
   stockSnapshot.docs.forEach((doc) => {
     batch.delete(doc.ref);
   });
 
-  const reservationSnapshot = await db.collection("reservations").where("bookId", "==", req.params.id).get();
+  const reservationSnapshot = await db.collection("reservations").where("bookId", "==", bookId).get();
   reservationSnapshot.docs.forEach((doc) => {
     batch.delete(doc.ref);
   });
@@ -196,10 +197,10 @@ adminApp.get("/books/:bookId/conditions", async(req, res) => {
 
     let conditions = [];
     snapshot.forEach((doc) => {
-    let id = doc.id;
-    let data = doc.data();
+        let id = doc.id;
+        let data = doc.data();
 
-    conditions.push({ id, ...data });
+        conditions.push({ id, ...data });
     });
 
     res.status(200).send(JSON.stringify(conditions));
