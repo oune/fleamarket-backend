@@ -164,6 +164,28 @@ adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCa
 
     res.status(200).send();
 });
+// 책상태 삭제
+adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
+  const batch = db.batch();
+  const conditionId = req.params.conditionId;
+
+  const conditionRef = await db.collection("conditions").doc(conditionId);
+  batch.delete(conditionRef);
+
+  const stockSnapshot = await db.collection("stocks").where("conditionId", "==", conditionId).get();
+  stockSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  const reservationSnapshot = await db.collection("reservations").where("conditionId", "==", conditionId).get();
+  reservationSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  await batch.commit();
+
+  res.status(200).send();
+});
 
 // 책상태 책아이디로 조회
 adminApp.get("/books/:bookId/conditions", async(req, res) => {
@@ -182,6 +204,5 @@ adminApp.get("/books/:bookId/conditions", async(req, res) => {
 
     res.status(200).send(JSON.stringify(conditions));
 });
-// 책상태 
 
 exports.admin = functions.https.onRequest(adminApp);
