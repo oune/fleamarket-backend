@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
+const bcrypt = require('bcrypt');
 const check = require('../controllers/middle');
 const express = require("express");
 const cors = require('cors');
@@ -100,7 +101,6 @@ adminApp.delete("/books/:conditionId/stocks/:id", async (req, res) => {
 // 예약 수정
 adminApp.put("/reservations/:id", check.impossibleField(["conditionId", "isCancel", "title"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
-  const bcrypt = require('bcrypt');
   const body = req.body;
   const saltRounds = 10;
 
@@ -144,7 +144,7 @@ adminApp.delete("/books/:conditionId/reservations/:id", async (req, res) => {
 });
 
 // 책상태 추가
-adminApp.put("/books/:bookId/:condition", check.requireField(["condition"]), async(req, res) => {
+adminApp.post("/books/:bookId/:condition", check.requireField(["condition"]), async(req, res) => {
     const condition = req.body;
     condition.bookId = req.params.bookId;
     condition.condition = req.params.condition;
@@ -157,7 +157,16 @@ adminApp.put("/books/:bookId/:condition", check.requireField(["condition"]), asy
 });
 
 // 책상태 수정
+adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCancel", "title", "stockCount", "reservationCount"]), async(req,res) => {
+    const body = req.body;
+
+    await db.collection("conditions").doc(req.param.condition).update(body);
+
+    res.status(200).send();
+});
+
 // 책상태 책아이디로 조회
+
 // 책상태 
 
 exports.admin = functions.https.onRequest(adminApp);
