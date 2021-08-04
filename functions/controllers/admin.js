@@ -166,7 +166,22 @@ adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCa
 });
 
 // 책상태 책아이디로 조회
+adminApp.get("/books/:bookId/conditions", async(req, res) => {
+    const snapshot = await db
+    .collection("conditions")
+    .where("bookId", "==", req.params.bookId)
+    .get();
 
+    let conditions = [];
+    snapshot.forEach((doc) => {
+    let id = doc.id;
+    let data = doc.data();
+
+    conditions.push({ id, ...data });
+    });
+
+    res.status(200).send(JSON.stringify(conditions));
+});
 // 책상태 
 
 exports.admin = functions.https.onRequest(adminApp);
