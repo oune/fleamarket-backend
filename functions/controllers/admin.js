@@ -63,8 +63,8 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
     const stockRef = db.collection("stocks").doc();
     batch.set(stockRef, stock);
 
-    const bookRef = db.collection("books").doc(req.params.id);
-    batch.update(bookRef, { stockCount: admin.firestore.FieldValue.increment(1) });
+    const conditionRef = db.collection("conditions").doc(req.params.id);
+    batch.update(conditionRef, { stockCount: admin.firestore.FieldValue.increment(1) });
 
     await batch.commit();
   } catch (e) {
@@ -91,8 +91,8 @@ adminApp.delete("/books/:conditionId/stocks/:id", async (req, res) => {
   const stockRef = db.collection("stocks").doc(req.params.id);
   batch.delete(stockRef);
 
-  const bookRef = db.collection("books").doc(req.params.conditionId);
-  batch.update(bookRef, { stockCount: admin.firestore.FieldValue.increment(-1) });
+  const conditionRef = db.collection("conditions").doc(req.params.conditionId);
+  batch.update(conditionRef, { stockCount: admin.firestore.FieldValue.increment(-1) });
 
   await batch.commit();
 
