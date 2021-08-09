@@ -48,14 +48,14 @@ bookApp.post(
     "title",
   ]),
   async (req, res) => {
-    const bookRef = db.collection("books").doc(req.params.bookId);
+    const conditionRef = db.collection("conditions").doc(req.params.bookId);
     const reservationRef = db.collection("reservations").doc();
     const bcrypt = require("bcrypt");
     const saltRounds = 10;
 
     try {
       await db.runTransaction(async (t) => {
-        const doc = await t.get(bookRef);
+        const doc = await t.get(conditionRef);
         const resCount = doc.data().stockCount > doc.data().reservationCount;
 
         if (resCount) {
@@ -70,7 +70,7 @@ bookApp.post(
           );
 
           await t.set(reservationRef, reservation);
-          await t.update(bookRef, {
+          await t.update(conditionRef, {
             reservationCount: admin.firestore.FieldValue.increment(1),
           });
         } else {
