@@ -145,14 +145,14 @@ adminApp.delete("/books/:conditionId/reservations/:id", async (req, res) => {
 });
 
 // 책상태 추가
-adminApp.post("/books/:bookId/:condition", check.requireField(["condition"]), async(req, res) => {
+adminApp.post("/books/:bookId/:condition", async(req, res) => {
     const condition = req.body;
     condition.bookId = req.params.bookId;
     condition.condition = req.params.condition;
     condition.stockCount = 0;
     condition.reservationCount = 0;
 
-    await db.collection("conditions").add(condision);
+    await db.collection("conditions").add(condition);
 
     res.status(201).send();
 });
@@ -165,6 +165,7 @@ adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCa
 
     res.status(200).send();
 });
+
 // 책상태 삭제
 adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
   const batch = db.batch();
@@ -186,24 +187,6 @@ adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
   await batch.commit();
 
   res.status(200).send();
-});
-
-// 책상태 책아이디로 조회
-adminApp.get("/books/:bookId/conditions", async(req, res) => {
-    const snapshot = await db
-    .collection("conditions")
-    .where("bookId", "==", req.params.bookId)
-    .get();
-
-    let conditions = [];
-    snapshot.forEach((doc) => {
-        let id = doc.id;
-        let data = doc.data();
-
-        conditions.push({ id, ...data });
-    });
-
-    res.status(200).send(JSON.stringify(conditions));
 });
 
 exports.admin = functions.https.onRequest(adminApp);
