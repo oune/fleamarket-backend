@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
+const bcrypt = require('bcrypt');
 const check = require('../controllers/middle');
 const express = require("express");
 const cors = require('cors');
@@ -12,8 +13,6 @@ adminApp.use(cors({ origin: true }));
 // 도서 추가
 adminApp.post("/books", check.requireField(["title", "publisher", "author"]), async (req, res) => {
   const user = req.body;
-  user.stockCount = 0;
-  user.reservationCount = 0;
 
   await db.collection("books").add(user);
 
@@ -32,16 +31,17 @@ adminApp.put("/books/:id", check.impossibleField(["reservationCount", "stockCoun
 // 도서 삭제
 adminApp.delete("/books/:id", async (req, res) => {
   const batch = db.batch();
+  const bookId = req.params.id;
 
-  const bookRef = await db.collection("books").doc(req.params.id);
+  const bookRef = await db.collection("books").doc(bookId);
   batch.delete(bookRef);
 
-  const stockSnapshot = await db.collection("stocks").where("bookId", "==", req.params.id).get();
+  const stockSnapshot = await db.collection("stocks").where("bookId", "==", bookId).get();
   stockSnapshot.docs.forEach((doc) => {
     batch.delete(doc.ref);
   });
 
-  const reservationSnapshot = await db.collection("reservations").where("bookId", "==", req.params.id).get();
+  const reservationSnapshot = await db.collection("reservations").where("bookId", "==", bookId).get();
   reservationSnapshot.docs.forEach((doc) => {
     batch.delete(doc.ref);
   });
@@ -55,7 +55,7 @@ adminApp.delete("/books/:id", async (req, res) => {
 adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "price", "state"]), async (req, res) => {
   try {
     const stock = req.body;
-    stock.bookId = req.params.id;
+    stock.conditionId = req.params.id;
     stock.isSold = false;
 
     const batch = db.batch();
@@ -63,8 +63,8 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
     const stockRef = db.collection("stocks").doc();
     batch.set(stockRef, stock);
 
-    const bookRef = db.collection("books").doc(req.params.id);
-    batch.update(bookRef, { stockCount: admin.firestore.FieldValue.increment(1) });
+    const conditionRef = db.collection("conditions").doc(req.params.id);
+    batch.update(conditionRef, { stockCount: admin.firestore.FieldValue.increment(1) });
 
     await batch.commit();
   } catch (e) {
@@ -76,7 +76,7 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
 });
 
 // 재고 내용 수정
-adminApp.put("/stocks/:id", check.impossibleField(["bookId"]), async (req, res) => {
+adminApp.put("/stocks/:id", check.impossibleField(["conditionId"]), async (req, res) => {
   const body = req.body;
 
   await db.collection("stocks").doc(req.params.id).update(body);
@@ -85,14 +85,14 @@ adminApp.put("/stocks/:id", check.impossibleField(["bookId"]), async (req, res) 
 });
 
 // 재고 삭제
-adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
+adminApp.delete("/books/:conditionId/stocks/:id", async (req, res) => {
   const batch = db.batch();
 
   const stockRef = db.collection("stocks").doc(req.params.id);
   batch.delete(stockRef);
 
-  const bookRef = db.collection("books").doc(req.params.bookId);
-  batch.update(bookRef, { stockCount: admin.firestore.FieldValue.increment(-1) });
+  const conditionRef = db.collection("conditions").doc(req.params.conditionId);
+  batch.update(conditionRef, { stockCount: admin.firestore.FieldValue.increment(-1) });
 
   await batch.commit();
 
@@ -100,9 +100,8 @@ adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
 });
 
 // 예약 수정
-adminApp.put("/reservations/:id", check.impossibleField(["bookId", "isCancel", "title"]), async (req, res) => {
+adminApp.put("/reservations/:id", check.impossibleField(["conditionId", "isCancel", "title"]), async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
-  const bcrypt = require('bcrypt');
   const body = req.body;
   const saltRounds = 10;
 
@@ -116,9 +115,9 @@ adminApp.put("/reservations/:id", check.impossibleField(["bookId", "isCancel", "
 });
 
 // 예약 취소
-adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
+adminApp.delete("/books/:conditionId/reservations/:id", async (req, res) => {
   const reservationRef = db.collection("reservations").doc(req.params.id);
-  const bookRef = db.collection("books").doc(req.params.bookId);
+  const conditionRef = db.collection("books").doc(req.params.conditionId);
 
   try {
     await db.runTransaction(async t => {
@@ -126,7 +125,7 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
 
       if (available) {
         await t.update(reservationRef, { "isCancel": true });
-        await t.update(bookRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
+        await t.update(conditionRef, { reservationCount: admin.firestore.FieldValue.increment(-1) });
       } else {
         throw new Error("이미 취소된 예약");
       }
@@ -142,6 +141,51 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
       res.status(421).send("알수없는 에러");
     }
   }
+  res.status(200).send();
+});
+
+// 책상태 추가
+adminApp.post("/books/:bookId/:condition", async(req, res) => {
+    const condition = req.body;
+    condition.bookId = req.params.bookId;
+    condition.condition = req.params.condition;
+    condition.stockCount = 0;
+    condition.reservationCount = 0;
+
+    await db.collection("conditions").add(condition);
+
+    res.status(201).send();
+});
+
+// 책상태 수정
+adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCancel", "title", "stockCount", "reservationCount"]), async(req,res) => {
+    const body = req.body;
+
+    await db.collection("conditions").doc(req.param.condition).update(body);
+
+    res.status(200).send();
+});
+
+// 책상태 삭제
+adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
+  const batch = db.batch();
+  const conditionId = req.params.conditionId;
+
+  const conditionRef = await db.collection("conditions").doc(conditionId);
+  batch.delete(conditionRef);
+
+  const stockSnapshot = await db.collection("stocks").where("conditionId", "==", conditionId).get();
+  stockSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  const reservationSnapshot = await db.collection("reservations").where("conditionId", "==", conditionId).get();
+  reservationSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  await batch.commit();
+
   res.status(200).send();
 });
 
