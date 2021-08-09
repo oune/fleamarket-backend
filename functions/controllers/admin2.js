@@ -10,7 +10,7 @@ const adminApp = express();
 adminApp.use(cors({ origin: true }));
 
 // 유효하지 않은 예약 제거
-adminApp.delete("/reservations/schedular", async (req, res) => {
+adminApp.get("/reservations/schedular", async (req, res) => {
   const reservations = await db.collection("reservations").get();
   const batch = db.batch();
 
@@ -32,11 +32,10 @@ adminApp.delete("/reservations/schedular", async (req, res) => {
       const rsvData = await (await rsvRef.get()).data();
 
       if (rsvData.date <= nowDate && !rsvData.isCancel) {
-        batch.update(rsvRef, {
-          bookId: rsvData.bookId,
-          date: rsvData.date,
-          isCancel: true,
-        });
+        const changeRsvData = rsvData;
+        changeRsvData.isCancel = true
+        console.log(changeRsvData)
+        batch.update(rsvRef, changeRsvData);
       }
     }
 
