@@ -140,17 +140,10 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
             if (!isCancel) {
                 await t.update(reservationRef, { "isCancel": true });
 
-                switch (state) {
-                    case "A":
-                        await t.update(bookRef, { reservationCountA: admin.firestore.FieldValue.increment(-1) });
-                        break;
-                    case "B":
-                        await t.update(bookRef, { reservationCountB: admin.firestore.FieldValue.increment(-1) });
-                        break;
-                    case "C":
-                        await t.update(bookRef, { reservationCountC: admin.firestore.FieldValue.increment(-1) });
-                        break;
-                }
+                const json = {}
+                json[keyName.getReservationCountName(state)] = admin.firestore.FieldValue.increment(-1);
+
+                await t.update(bookRef, json);
             } else {
                 throw new Error("이미 취소된 예약");
             }
