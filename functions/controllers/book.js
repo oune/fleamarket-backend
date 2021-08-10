@@ -235,4 +235,22 @@ bookApp.get("/:bookId/stocks", async (req, res) => {
     res.status(200).send(JSON.stringify(stocks));
 });
 
+// 책상태 책아이디로 조회
+bookApp.get("/:bookId/conditions", async(req, res) => {
+    const snapshot = await db
+    .collection("conditions")
+    .where("bookId", "==", req.params.bookId)
+    .get();
+
+    let conditions = [];
+    snapshot.forEach((doc) => {
+        let id = doc.id;
+        let data = doc.data();
+
+        conditions.push({ id, ...data });
+    });
+
+    res.status(200).send(JSON.stringify(conditions));
+});
+
 exports.books = functions.https.onRequest(bookApp);
