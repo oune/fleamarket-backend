@@ -187,7 +187,7 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
 });
 
 // 책상태 추가
-adminApp.post("/books/:bookId/:condition", async(req, res) => {
+adminApp.post("/books/:bookId/:condition", async (req, res) => {
     const condition = req.body;
     condition.bookId = req.params.bookId;
     condition.condition = req.params.condition;
@@ -200,7 +200,7 @@ adminApp.post("/books/:bookId/:condition", async(req, res) => {
 });
 
 // 책상태 수정
-adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCancel", "title", "stockCount", "reservationCount"]), async(req,res) => {
+adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCancel", "title", "stockCount", "reservationCount"]), async (req, res) => {
     const body = req.body;
 
     await db.collection("conditions").doc(req.param.condition).update(body);
@@ -210,25 +210,65 @@ adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCa
 
 // 책상태 삭제
 adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
-  const batch = db.batch();
-  const conditionId = req.params.conditionId;
+    const batch = db.batch();
+    const conditionId = req.params.conditionId;
 
-  const conditionRef = await db.collection("conditions").doc(conditionId);
-  batch.delete(conditionRef);
+    const conditionRef = await db.collection("conditions").doc(conditionId);
+    batch.delete(conditionRef);
 
-  const stockSnapshot = await db.collection("stocks").where("conditionId", "==", conditionId).get();
-  stockSnapshot.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
+    const stockSnapshot = await db.collection("stocks").where("conditionId", "==", conditionId).get();
+    stockSnapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
 
-  const reservationSnapshot = await db.collection("reservations").where("conditionId", "==", conditionId).get();
-  reservationSnapshot.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
+    const reservationSnapshot = await db.collection("reservations").where("conditionId", "==", conditionId).get();
+    reservationSnapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
 
-  await batch.commit();
+    await batch.commit();
 
-  res.status(200).send();
+    res.status(200).send();
+});
+
+// 유효하지 않은 예약 제거
+adminApp.get("/reservations/schedular", async (req, res) => {
+    const reservations = await db.collection("reservations").get();
+    const batch = db.batch();
+
+    const rsvIds = []
+
+    reservations.forEach((doc) => { rsvIds.push(doc.id) });
+
+    const today = new Date();
+
+    const year = today.getFullYear(); // 년도
+    const month = today.getMonth() + 1;  // 월
+    const date = today.getDate();  // 날짜
+
+    const nowDate = year + '-0' + month + '-0' + date
+
+    try {
+        for (id of rsvIds) {
+            const rsvRef = await db.collection("reservations").doc(id);
+            const rsvData = await (await rsvRef.get()).data();
+
+            if (rsvData.date <= nowDate && !rsvData.isCancel) {
+                const changeRsvData = rsvData;
+                changeRsvData.isCancel = true
+                console.log(changeRsvData)
+                batch.update(rsvRef, changeRsvData);
+            }
+        }
+
+    } catch (e) {
+        console.log(e)
+        res.status(421).send("알수없는 에러");
+    }
+    await batch.commit();
+
+    res.status(200).send();
+
 });
 
 exports.admin = functions.https.onRequest(adminApp);
