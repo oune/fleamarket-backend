@@ -1,7 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
-const bcrypt = require('bcrypt');
 const check = require('../controllers/middle');
+const keyName = require('../controllers/getType');
 const express = require("express");
 const cors = require('cors');
 
@@ -70,21 +70,9 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
         batch.set(stockRef, stock);
 
         const bookRef = db.collection("books").doc(req.params.id);
+        const key = keyName.getStockCountName(stock.state);
 
-        switch (stock.state) {
-            case "A":
-            case "a":
-                batch.update(bookRef, { stockCountA: admin.firestore.FieldValue.increment(1) });
-                break;
-            case "B":
-            case "b":
-                batch.update(bookRef, { stockCountB: admin.firestore.FieldValue.increment(1) });
-                break;
-            case "C":
-            case "c":
-                batch.update(bookRef, { stockCountC: admin.firestore.FieldValue.increment(1) });
-                break;
-        }
+        batch.update(bookRef, { key: admin.firestore.FieldValue.increment(1) });
 
         await batch.commit();
     } catch (e) {
@@ -229,46 +217,6 @@ adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
     await batch.commit();
 
     res.status(200).send();
-});
-
-// 유효하지 않은 예약 제거
-adminApp.get("/reservations/schedular", async (req, res) => {
-    const reservations = await db.collection("reservations").get();
-    const batch = db.batch();
-
-    const rsvIds = []
-
-    reservations.forEach((doc) => { rsvIds.push(doc.id) });
-
-    const today = new Date();
-
-    const year = today.getFullYear(); // 년도
-    const month = today.getMonth() + 1;  // 월
-    const date = today.getDate();  // 날짜
-
-    const nowDate = year + '-0' + month + '-0' + date
-
-    try {
-        for (id of rsvIds) {
-            const rsvRef = await db.collection("reservations").doc(id);
-            const rsvData = await (await rsvRef.get()).data();
-
-            if (rsvData.date <= nowDate && !rsvData.isCancel) {
-                const changeRsvData = rsvData;
-                changeRsvData.isCancel = true
-                console.log(changeRsvData)
-                batch.update(rsvRef, changeRsvData);
-            }
-        }
-
-    } catch (e) {
-        console.log(e)
-        res.status(421).send("알수없는 에러");
-    }
-    await batch.commit();
-
-    res.status(200).send();
-
 });
 
 exports.admin = functions.https.onRequest(adminApp);
