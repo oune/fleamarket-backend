@@ -69,10 +69,11 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
         const stockRef = db.collection("stocks").doc();
         batch.set(stockRef, stock);
 
-        const bookRef = db.collection("books").doc(req.params.id);
-        const key = keyName.getStockCountName(stock.state);
+        const json = {}
+        json[keyName.getStockCountName(stock.state)] = admin.firestore.FieldValue.increment(1);
 
-        batch.update(bookRef, { key: admin.firestore.FieldValue.increment(1) });
+        const bookRef = db.collection("books").doc(req.params.id);
+        batch.update(bookRef, json);
 
         await batch.commit();
     } catch (e) {
