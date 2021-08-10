@@ -159,26 +159,10 @@ bookApp.delete("/:bookId/reservations/:id", async (req, res) => {
             if (match) {
                 await t.update(reservationRef, { isCancel: true });
 
-                switch (state) {
-                    case "A":
-                    case "a":
-                        await t.update(bookRef, {
-                            reservationCountA: admin.firestore.FieldValue.increment(-1),
-                        });
-                        break;
-                    case "B":
-                    case "b":
-                        await t.update(bookRef, {
-                            reservationCountB: admin.firestore.FieldValue.increment(-1),
-                        });
-                        break;
-                    case "C":
-                    case "c":
-                        await t.update(bookRef, {
-                            reservationCountC: admin.firestore.FieldValue.increment(-1),
-                        });
-                        break;
-                }
+                const json = {}
+                json[keyName.getReservationCountName(state)] = admin.firestore.FieldValue.increment(-1)
+
+                await t.update(bookRef, json);
             } else {
                 throw new Error("비밀번호가 다름");
             }
