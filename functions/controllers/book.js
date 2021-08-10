@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const check = require("../controllers/middle");
+const keyName = require('../controllers/getType');
 const express = require("express");
 const cors = require("cors");
 

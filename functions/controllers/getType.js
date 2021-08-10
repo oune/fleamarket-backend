@@ -1,5 +1,5 @@
 function getStockCountName(state) {
-    switch (stock.state) {
+    switch (state) {
         case "A":
         case "a":
             return "stockCountA"
@@ -15,7 +15,7 @@ function getStockCountName(state) {
 }
 
 function getReservationCountName(state) {
-    switch (stock.state) {
+    switch (state) {
         case "A":
         case "a":
             return "reservationCountA"
