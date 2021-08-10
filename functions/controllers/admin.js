@@ -101,18 +101,12 @@ adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
     const stockRef = db.collection("stocks").doc(req.params.id);
     batch.delete(stockRef);
 
+    const json = {}
+    json[keyName.getStockCountName(stock.state)] = admin.firestore.FieldValue.increment(-1)
+
     const bookRef = db.collection("books").doc(req.params.bookId);
-    switch (stock.state) {
-        case "A":
-            batch.update(bookRef, { stockCountA: admin.firestore.FieldValue.increment(-1) });
-            break;
-        case "B":
-            batch.update(bookRef, { stockCountB: admin.firestore.FieldValue.increment(-1) });
-            break;
-        case "C":
-            batch.update(bookRef, { stockCountC: admin.firestore.FieldValue.increment(-1) });
-            break;
-    }
+    batch.update(bookRef, json);
+
     await batch.commit();
 
     res.status(200).send();
