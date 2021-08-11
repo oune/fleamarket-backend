@@ -9,10 +9,9 @@ function requireField(fields) {
             }
         }
 
-        if (fails.length === 1) {
-            return res.status(400).send(`${fails.join(',')} is required`);
-        } else if (fails.length > 1) {
-            return res.status(400).send(`${fails.join(',')} are required`);
+        if (fails.length >= 1) {
+            const be = (fails.length === 1) ? "is" : "are";
+            return res.status(400).send(`${fails.join(',')} ${be} required`);
         }
 
         next();
@@ -29,10 +28,10 @@ function impossibleField(fields) {
                 fails.push(field);
             }
         }
-        if (fails.length === 1) {
-            return res.status(400).send(`${fails.join(',')} is impossible`);
-        } else if (fails.length > 1) {
-            return res.status(400).send(`${fails.join(',')} are impossible`);
+
+        if (fails.length >= 1) {
+            const be = (fails.length === 1) ? "is" : "are";
+            return res.status(400).send(`${fails.join(',')} ${be} impossible`);
         }
         next();
 
