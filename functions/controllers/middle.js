@@ -1,5 +1,6 @@
 // 가능한 필드 명시
 function requireField(fields) {
+    // eslint-disable-next-line consistent-return
     return (req, res, next) => {
         const fails = [];
         for (const field of fields) {
@@ -7,17 +8,20 @@ function requireField(fields) {
                 fails.push(field);
             }
         }
+
         if (fails.length === 1) {
             return res.status(400).send(`${fails.join(',')} is required`);
         } else if (fails.length > 1) {
             return res.status(400).send(`${fails.join(',')} are required`);
         }
+
         next();
     };
 }
 
 // 불가능한 필드 명시
 function impossibleField(fields) {
+    // eslint-disable-next-line consistent-return
     return (req, res, next) => {
         const fails = [];
         for (const field of fields) {
