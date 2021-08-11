@@ -137,7 +137,8 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
 
     try {
         await db.runTransaction(async t => {
-            const { isCancel, state } = await t.get(reservationRef).data();
+            const doc = await t.get(reservationRef)
+            const { isCancel, state } = doc.data();
 
             if (!isCancel) {
                 await t.update(reservationRef, { "isCancel": true });
