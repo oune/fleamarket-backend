@@ -98,12 +98,13 @@ adminApp.put("/stocks/:id", check.impossibleField(["bookId", "state"]), async (r
 // 재고 삭제
 adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
     const batch = db.batch();
+    const state = req.body.state;
 
     const stockRef = db.collection("stocks").doc(req.params.id);
     batch.delete(stockRef);
 
     const json = {}
-    json[keyName.getStockCountName(stock.state)] = admin.firestore.FieldValue.increment(-1)
+    json[keyName.getStockCountName(state)] = admin.firestore.FieldValue.increment(-1)
 
     const bookRef = db.collection("books").doc(req.params.bookId);
     batch.update(bookRef, json);
