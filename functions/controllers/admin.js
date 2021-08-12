@@ -89,7 +89,6 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
 adminApp.put("/stocks/:id", check.impossibleField(["bookId", "state"]), async (req, res) => {
     const body = req.body;
 
-
     await db.collection("stocks").doc(req.params.id).update(body);
 
     res.status(200).send();
@@ -162,51 +161,6 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
             res.status(421).send("알수없는 에러");
         }
     }
-    res.status(200).send();
-});
-
-// 책상태 추가
-adminApp.post("/books/:bookId/:condition", async (req, res) => {
-    const condition = req.body;
-    condition.bookId = req.params.bookId;
-    condition.condition = req.params.condition;
-    condition.stockCount = 0;
-    condition.reservationCount = 0;
-
-    await db.collection("conditions").add(condition);
-
-    res.status(201).send();
-});
-
-// 책상태 수정
-adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCancel", "title", "stockCount", "reservationCount"]), async (req, res) => {
-    const body = req.body;
-
-    await db.collection("conditions").doc(req.param.condition).update(body);
-
-    res.status(200).send();
-});
-
-// 책상태 삭제
-adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
-    const batch = db.batch();
-    const conditionId = req.params.conditionId;
-
-    const conditionRef = await db.collection("conditions").doc(conditionId);
-    batch.delete(conditionRef);
-
-    const stockSnapshot = await db.collection("stocks").where("conditionId", "==", conditionId).get();
-    stockSnapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    const reservationSnapshot = await db.collection("reservations").where("conditionId", "==", conditionId).get();
-    reservationSnapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
     res.status(200).send();
 });
 
