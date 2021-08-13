@@ -62,7 +62,9 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
     try {
         const stock = req.body;
         stock.bookId = req.params.id;
-        stock.isSold = false;
+        if (stock.isSold === undefined) {
+            stock.isSold = false;
+        }
 
         const batch = db.batch();
 
