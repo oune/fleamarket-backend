@@ -62,7 +62,9 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
     try {
         const stock = req.body;
         stock.bookId = req.params.id;
-        stock.isSold = false;
+        if (stock.isSold === undefined) {
+            stock.isSold = false;
+        }
 
         const batch = db.batch();
 
@@ -89,7 +91,6 @@ adminApp.post("/books/:id/stocks", check.requireField(["name", "studentId", "pri
 adminApp.put("/stocks/:id", check.impossibleField(["bookId", "state"]), async (req, res) => {
     const body = req.body;
 
-
     await db.collection("stocks").doc(req.params.id).update(body);
 
     res.status(200).send();
@@ -98,12 +99,13 @@ adminApp.put("/stocks/:id", check.impossibleField(["bookId", "state"]), async (r
 // 재고 삭제
 adminApp.delete("/books/:bookId/stocks/:id", async (req, res) => {
     const batch = db.batch();
+    const state = req.body.state;
 
     const stockRef = db.collection("stocks").doc(req.params.id);
     batch.delete(stockRef);
 
     const json = {}
-    json[keyName.getStockCountName(stock.state)] = admin.firestore.FieldValue.increment(-1)
+    json[keyName.getStockCountName(state)] = admin.firestore.FieldValue.increment(-1)
 
     const bookRef = db.collection("books").doc(req.params.bookId);
     batch.update(bookRef, json);
@@ -136,7 +138,8 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
 
     try {
         await db.runTransaction(async t => {
-            const { isCancel, state } = await t.get(reservationRef).data();
+            const doc = await t.get(reservationRef)
+            const { isCancel, state } = doc.data();
 
             if (!isCancel) {
                 await t.update(reservationRef, { "isCancel": true });
@@ -163,49 +166,49 @@ adminApp.delete("/books/:bookId/reservations/:id", async (req, res) => {
     res.status(200).send();
 });
 
-// 책상태 추가
-adminApp.post("/books/:bookId/:condition", async (req, res) => {
-    const condition = req.body;
-    condition.bookId = req.params.bookId;
-    condition.condition = req.params.condition;
-    condition.stockCount = 0;
-    condition.reservationCount = 0;
+/***
+made by WooSeong
+현재 날짜 문자열로 받아오는 함수
+***/
+const getStringDate = () => {
+    const today = new Date();
 
-    await db.collection("conditions").add(condition);
+    const year = today.getFullYear(); // 년도
+    let month = today.getMonth() + 1;  // 월
+    let date = today.getDate();  // 날짜
 
-    res.status(201).send();
-});
+    if (Number(month) < 10)
+        month = '0' + month
+    if (Number(date) < 10)
+        date = '0' + date
 
-// 책상태 수정
-adminApp.put("/books/:bookId/:condition", check.impossibleField(["bookId", "isCancel", "title", "stockCount", "reservationCount"]), async (req, res) => {
-    const body = req.body;
+    return year + '-' + month + '-' + date
+}
 
-    await db.collection("conditions").doc(req.param.condition).update(body);
-
-    res.status(200).send();
-});
-
-// 책상태 삭제
-adminApp.delete("/books/:bookId/:conditionId", async (req, res) => {
+/***
+made by WooSeong
+유효하지 않은 예약 제거
+***/
+adminApp.get("/reservations/schedular", async (req, res) => {
     const batch = db.batch();
-    const conditionId = req.params.conditionId;
-
-    const conditionRef = await db.collection("conditions").doc(conditionId);
-    batch.delete(conditionRef);
-
-    const stockSnapshot = await db.collection("stocks").where("conditionId", "==", conditionId).get();
-    stockSnapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    const reservationSnapshot = await db.collection("reservations").where("conditionId", "==", conditionId).get();
-    reservationSnapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
-    res.status(200).send();
+    const nowDate = getStringDate();
+    const rsvDatas = await db.collection("reservations").get();
+    try {
+        rsvDatas.forEach((doc) => {
+            const rsvData = doc.data()
+            const rsvRef = doc._ref
+            if (rsvData.date <= nowDate && !rsvData.isCancel) {
+                rsvData.isCancel = true
+                batch.update(rsvRef, rsvData);
+            }
+        })
+        await batch.commit()
+        res.status(200).send();
+    }
+    catch (e) {
+        console.log(e)
+        res.status(421).send("알수없는 에러");
+    }
 });
 
 exports.admin = functions.https.onRequest(adminApp);
